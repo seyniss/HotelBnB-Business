@@ -207,10 +207,7 @@ const getReviewStats = async (req, res) => {
 
 module.exports = {
   reportReview,
-  blockReview,
-  getBlockedReviews,
   getReviewsByLodging,
-  getReports,
   getReviews,
   getReviewById,
   replyToReview,

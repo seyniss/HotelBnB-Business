@@ -6,10 +6,7 @@ const router = express.Router();
 
 const {
   reportReview,
-  blockReview,
-  getBlockedReviews,
   getReviewsByLodging,
-  getReports,
   getReviews,
   getReviewById,
   replyToReview,
@@ -27,17 +24,11 @@ router.use(authenticateToken);
 // 사업자 전용 라우트
 router.use(requireBusiness);
 
-// GET /api/business/reviews/reports → 신고 내역 조회 (사업자 본인 것만)
-router.get("/reports", getReports);
-
 // GET /api/business/reviews → 사업자의 모든 숙소 리뷰 목록 조회
 router.get("/", getReviews);
 
 // GET /api/business/reviews/stats → 리뷰 통계 (stats가 :id보다 먼저 와야 함)
 router.get("/stats", getReviewStats);
-
-// GET /api/business/reviews/blocked → 차단된 리뷰 목록 조회
-router.get("/blocked", getBlockedReviews);
 
 // GET /api/business/reviews/:id → 리뷰 상세 조회
 router.get("/:id", getReviewById);
@@ -47,9 +38,6 @@ router.post("/:id/reply", replyToReview);
 
 // POST /api/business/reviews/:id/report → 리뷰 신고
 router.post("/:id/report", reportReview);
-
-// PATCH /api/business/reviews/:id/block → 리뷰 차단
-router.patch("/:id/block", blockReview);
 
 module.exports = router;
 

@@ -12,9 +12,6 @@ const lodgingRoutes = require("./src/lodging/route");
 const roomRoutes = require("./src/room/route");
 const reviewRoutes = require("./src/review/route");
 const amenityRoutes = require("./src/amenity/route");
-const noticeRoutes = require("./src/notice/route");
-const pictureRoutes = require("./src/picture/route");
-const uploadRoutes = require("./src/upload/route");
 const statsRoutes = require("./src/stats/route");
 
 const app = express();
@@ -64,10 +61,7 @@ app.use("/api/business/hotel", lodgingRoutes);
 app.use("/api/business/rooms", roomRoutes);
 app.use("/api/business/bookings", bookingRoutes);  
 app.use("/api/business/stats", statsRoutes);
-app.use("/api/business/upload", uploadRoutes);
 app.use("/api/business/amenities", amenityRoutes);
-app.use("/api/business/notices", noticeRoutes);
-app.use("/api/business/pictures", pictureRoutes);
 app.use("/api/business/reviews", reviewRoutes);
 
 // 404 핸들러
