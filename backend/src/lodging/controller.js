@@ -1,0 +1,317 @@
+const lodgingService = require("./service");
+const { successResponse, errorResponse } = require("../common/response");
+const mongoose = require("mongoose");
+
+// 숙소 목록 조회
+const getLodgings = async (req, res) => {
+  try {
+    const result = await lodgingService.getLodgings(req.user.id);
+    if (!result) {
+      return res.status(200).json(successResponse(null, "등록된 숙소가 없습니다.", 200));
+    }
+    return res.status(200).json(successResponse(result, "SUCCESS", 200));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+// 숙소 상세 조회
+const getLodgingById = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json(errorResponse("잘못된 id 형식입니다.", 400));
+    }
+
+    const result = await lodgingService.getLodgingById(req.params.id, req.user.id);
+    return res.status(200).json(successResponse(result, "SUCCESS", 200));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "LODGING_NOT_FOUND") {
+      return res.status(404).json(errorResponse("숙소를 찾을 수 없습니다.", 404));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+// 숙소 생성
+const createLodging = async (req, res) => {
+  try {
+    const {
+      lodgingName,
+      address,
+      rating,
+      description,
+      images,
+      country,
+      categoryId,
+      hashtag,
+      bbqGrill,
+      netflix,
+      swimmingPool,
+      parking,
+      wifi,
+      kitchen,
+      pc,
+      tv,
+      ac,
+      minPrice,
+      lat,
+      lng,
+      phoneNumber,
+      email,
+      website,
+      checkInTime,
+      checkOutTime,
+      city,
+      policies,
+      amenities
+    } = req.body;
+
+    // 필수 필드 검증
+    if (!lodgingName || !address || !rating || !description || !images || !country || !categoryId) {
+      return res.status(400).json(errorResponse("필수 필드가 누락되었습니다.", 400));
+    }
+
+    // images 배열 검증
+    if (!Array.isArray(images) || images.length === 0) {
+      return res.status(400).json(errorResponse("이미지는 최소 1개 이상 필요합니다.", 400));
+    }
+
+    // rating 범위 검증
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json(errorResponse("등급은 1~5 사이의 값이어야 합니다.", 400));
+    }
+
+    // categoryId 검증
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json(errorResponse("잘못된 categoryId 형식입니다.", 400));
+    }
+
+    // minPrice 검증
+    if (minPrice !== undefined && (typeof minPrice !== 'number' || minPrice < 0)) {
+      return res.status(400).json(errorResponse("최저 가격은 0 이상의 숫자여야 합니다.", 400));
+    }
+
+    // lat, lng 검증 (제공된 경우)
+    if (lat !== undefined && (typeof lat !== 'number' || lat < -90 || lat > 90)) {
+      return res.status(400).json(errorResponse("위도(lat)는 -90과 90 사이의 값이어야 합니다.", 400));
+    }
+    if (lng !== undefined && (typeof lng !== 'number' || lng < -180 || lng > 180)) {
+      return res.status(400).json(errorResponse("경도(lng)는 -180과 180 사이의 값이어야 합니다.", 400));
+    }
+
+    const result = await lodgingService.createLodging({
+      lodgingName,
+      address,
+      rating,
+      description,
+      images,
+      country,
+      categoryId,
+      hashtag,
+      bbqGrill,
+      netflix,
+      swimmingPool,
+      parking,
+      wifi,
+      kitchen,
+      pc,
+      tv,
+      ac,
+      minPrice,
+      lat,
+      lng,
+      phoneNumber,
+      email,
+      website,
+      checkInTime,
+      checkOutTime,
+      city,
+      policies,
+      amenities
+    }, req.user.id);
+
+    return res.status(201).json(successResponse(result, "숙소가 생성되었습니다.", 201));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "LODGING_ALREADY_EXISTS") {
+      return res.status(400).json(errorResponse("이미 등록된 숙소가 있습니다. 사업자당 하나의 숙소만 등록할 수 있습니다.", 400));
+    }
+    if (error.message === "BUSINESS_INFO_MISSING") {
+      return res.status(400).json(errorResponse("사업자 정보가 없습니다.", 400));
+    }
+    if (error.message.includes("좌표 변환 실패") || error.message.includes("주소 또는 좌표가 필요")) {
+      return res.status(400).json(errorResponse(error.message, 400));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+// 숙소 수정
+const updateLodging = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json(errorResponse("잘못된 id 형식입니다.", 400));
+    }
+
+    const {
+      lodgingName,
+      address,
+      rating,
+      description,
+      images,
+      country,
+      categoryId,
+      hashtag,
+      bbqGrill,
+      netflix,
+      swimmingPool,
+      parking,
+      wifi,
+      kitchen,
+      pc,
+      tv,
+      ac,
+      minPrice,
+      lat,
+      lng,
+      phoneNumber,
+      email,
+      website,
+      checkInTime,
+      checkOutTime,
+      city,
+      policies,
+      amenities
+    } = req.body;
+
+    // 유효성 검증
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      return res.status(400).json(errorResponse("등급은 1~5 사이의 값이어야 합니다.", 400));
+    }
+
+    // categoryId 검증 (제공된 경우)
+    if (categoryId !== undefined && !mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json(errorResponse("잘못된 categoryId 형식입니다.", 400));
+    }
+
+    // minPrice 검증
+    if (minPrice !== undefined && (typeof minPrice !== 'number' || minPrice < 0)) {
+      return res.status(400).json(errorResponse("최저 가격은 0 이상의 숫자여야 합니다.", 400));
+    }
+
+    // lat, lng 검증 (제공된 경우)
+    if (lat !== undefined && (typeof lat !== 'number' || lat < -90 || lat > 90)) {
+      return res.status(400).json(errorResponse("위도(lat)는 -90과 90 사이의 값이어야 합니다.", 400));
+    }
+    if (lng !== undefined && (typeof lng !== 'number' || lng < -180 || lng > 180)) {
+      return res.status(400).json(errorResponse("경도(lng)는 -180과 180 사이의 값이어야 합니다.", 400));
+    }
+
+    const result = await lodgingService.updateLodging(req.params.id, {
+      lodgingName,
+      address,
+      rating,
+      description,
+      images,
+      country,
+      categoryId,
+      hashtag,
+      bbqGrill,
+      netflix,
+      swimmingPool,
+      parking,
+      wifi,
+      kitchen,
+      pc,
+      tv,
+      ac,
+      minPrice,
+      lat,
+      lng,
+      phoneNumber,
+      email,
+      website,
+      checkInTime,
+      checkOutTime,
+      city,
+      policies,
+      amenities
+    }, req.user.id);
+
+    return res.status(200).json(successResponse(result, "숙소가 수정되었습니다.", 200));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "LODGING_NOT_FOUND") {
+      return res.status(404).json(errorResponse("숙소를 찾을 수 없습니다.", 404));
+    }
+    if (error.message.includes("좌표 변환 실패")) {
+      return res.status(400).json(errorResponse(error.message, 400));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+// 숙소 삭제
+const deleteLodging = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json(errorResponse("잘못된 id 형식입니다.", 400));
+    }
+
+    const result = await lodgingService.deleteLodging(req.params.id, req.user.id);
+    return res.status(200).json(successResponse(result, "숙소가 삭제되었습니다.", 200));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "LODGING_NOT_FOUND") {
+      return res.status(404).json(errorResponse("숙소를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "HAS_BOOKINGS") {
+      return res.status(400).json(errorResponse("예약이 있어 숙소를 삭제할 수 없습니다.", 400));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+// 호텔 이미지 수정
+const updateLodgingImages = async (req, res) => {
+  try {
+    const { images } = req.body;
+
+    if (!images || !Array.isArray(images)) {
+      return res.status(400).json(errorResponse("images 배열이 필요합니다.", 400));
+    }
+
+    const result = await lodgingService.updateLodgingImages(req.user.id, images);
+    return res.status(200).json(successResponse(result, "이미지가 수정되었습니다.", 200));
+  } catch (error) {
+    if (error.message === "BUSINESS_NOT_FOUND") {
+      return res.status(404).json(errorResponse("사업자 정보를 찾을 수 없습니다.", 404));
+    }
+    if (error.message === "LODGING_NOT_FOUND") {
+      return res.status(404).json(errorResponse("숙소를 찾을 수 없습니다.", 404));
+    }
+    return res.status(500).json(errorResponse("서버 오류", 500, error.message));
+  }
+};
+
+module.exports = {
+  getLodgings,
+  getLodgingById,
+  createLodging,
+  updateLodging,
+  deleteLodging,
+  updateLodgingImages
+};
+

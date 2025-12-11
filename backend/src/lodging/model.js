@@ -1,0 +1,164 @@
+const mongoose = require("mongoose");
+
+const lodgingSchema = new mongoose.Schema(
+  {
+    // 🏨 숙소 기본 정보
+    lodgingName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50
+    },
+    
+    address: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 255
+    },
+    
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+      default: 3
+    },
+    
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    
+    minPrice: {
+      type: Number,
+      min: 0
+    },
+    
+    // 🗺️ 지도 좌표 (주소가 있으면 자동 변환, 없으면 선택사항)
+    lat: {
+      type: Number,
+      required: false
+    },
+    
+    lng: {
+      type: Number,
+      required: false
+    },
+    
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    
+    images: {
+      type: [String],
+      default: [],
+      trim: true
+    },
+    
+    // 🌍 위치 정보
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50
+    },
+    
+    // 🏠 숙소 종류
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+      index: true
+    },
+    
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: false
+    },
+    
+    // #️⃣ 해시태그 (배열로 저장)
+    hashtag: {
+      type: [String],
+      default: [],
+      trim: true,
+    },
+    
+    // 🔗 사업자 참조 (BusinessUser 모델과 직접 연결)
+    businessId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BusinessUser',
+      required: true,
+      index: true
+    },
+    
+    // 🏢 사업자명 (조회 성능 향상을 위해 저장)
+    businessName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    
+    amenityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Amenity',
+      required: false
+    },
+    
+    // 📞 연락처 정보
+    phoneNumber: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    email: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    website: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    
+    // ⏰ 체크인/아웃 시간 (기본값, Room에서 오버라이드 가능)
+    checkInTime: {
+      type: String,
+      trim: true,
+      default: "15:00"
+    },
+    checkOutTime: {
+      type: String,
+      trim: true,
+      default: "11:00"
+    },
+    
+    // 📍 도시 정보
+    city: {
+      type: String,
+      trim: true,
+      default: ""
+    }
+  },
+  {
+    timestamps: true,
+    collection: 'lodgings'
+  }
+);
+
+// 복합 인덱스
+lodgingSchema.index({ businessId: 1, createdAt: -1 });
+lodgingSchema.index({ country: 1 });
+lodgingSchema.index({ categoryId: 1 });
+lodgingSchema.index({ rating: -1 });
+lodgingSchema.index({ amenityId: 1 });
+// 지도 좌표를 위한 2dsphere 인덱스 (지도 API 쿼리 최적화)
+lodgingSchema.index({ lat: 1, lng: 1 });
+
+module.exports = mongoose.model('Lodging', lodgingSchema);
+

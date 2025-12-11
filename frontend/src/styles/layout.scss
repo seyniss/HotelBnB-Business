@@ -1,0 +1,245 @@
+@use "./variables.scss" as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: $font-family;
+  font-size: $font-size-base;
+  color: $text-primary;
+  background-color: $bg-secondary;
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+// 레이아웃 공통
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 $spacing-lg;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+
+  h1 {
+    font-size: $font-size-2xl;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  p {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    margin-top: $spacing-xs;
+  }
+}
+
+// 카드
+.card {
+  background: $bg-primary;
+  border-radius: $border-radius;
+  box-shadow: $shadow-sm;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  border: 1px solid $border-color;
+
+  &__header {
+    margin-bottom: $spacing-md;
+
+    h3 {
+      font-size: $font-size-lg;
+      font-weight: 600;
+      color: $text-primary;
+    }
+  }
+}
+
+// 버튼
+.btn {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: $transition-base;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    background-color: $primary-color;
+    color: $text-white;
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  &.btn-secondary {
+    background-color: $secondary-color;
+    color: $text-white;
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  &.btn-danger {
+    background-color: $danger-color;
+    color: $text-white;
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  &.btn-outline {
+    background-color: transparent;
+    border: 1px solid $border-color;
+    color: $text-primary;
+
+    &:hover:not(:disabled) {
+      background-color: $bg-secondary;
+    }
+  }
+}
+
+// 테이블
+.table-wrapper {
+  overflow-x: auto;
+  background: $bg-primary;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: $spacing-md;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+  }
+
+  th {
+    background-color: $bg-secondary;
+    font-weight: 600;
+    color: $text-primary;
+    font-size: $font-size-sm;
+  }
+
+  td {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+  }
+
+  tbody tr {
+    &:hover {
+      background-color: $bg-secondary;
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+// 폼
+.form-group {
+  margin-bottom: $spacing-lg;
+
+  label {
+    display: block;
+    margin-bottom: $spacing-sm;
+    font-weight: 500;
+    font-size: $font-size-sm;
+    color: $text-primary;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    font-size: $font-size-sm;
+    transition: $transition-base;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(127, 216, 190, 0.2);
+    }
+
+    &:disabled {
+      background-color: $bg-secondary;
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .error {
+    color: $danger-color;
+    font-size: $font-size-xs;
+    margin-top: $spacing-xs;
+  }
+}
+
+// 상태 배지
+.status-badge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius;
+  font-size: $font-size-xs;
+  font-weight: 500;
+
+  &.confirmed {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: $success-color;
+  }
+
+  &.pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: $warning-color;
+  }
+
+  &.cancelled {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: $danger-color;
+  }
+
+  &.approved {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: $success-color;
+  }
+
+  &.reported {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: $danger-color;
+  }
+}
