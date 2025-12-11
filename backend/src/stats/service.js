@@ -3,6 +3,7 @@ const Payment = require("../booking/payment");
 const Lodging = require("../lodging/model");
 const Room = require("../room/model");
 const BusinessUser = require("../auth/model");
+const Review = require("../review/model");
 
 // 대시보드 통계
 const getDashboardStats = async (userId) => {
@@ -32,9 +33,32 @@ const getDashboardStats = async (userId) => {
   // 기본 통계
   const lodgingIds = await Lodging.find({ businessId: user._id }).distinct('_id');
   
-  const [totalLodgings, totalRooms, todayBookings, pendingBookings, activeRooms] = await Promise.all([
+  // 총 리뷰 개수 쿼리 (lodgingIds가 비어있으면 빈 배열로 처리)
+  const reviewQuery = lodgingIds.length > 0 
+    ? { lodgingId: { $in: lodgingIds }, status: 'active' }
+    : { lodgingId: { $in: [] }, status: 'active' }; // 빈 배열로 처리하여 0 반환
+  
+  const [
+    totalLodgings, 
+    roomsData, 
+    totalBookings, 
+    totalReviews, 
+    todayBookings, 
+    pendingBookings, 
+    activeRooms
+  ] = await Promise.all([
     Lodging.countDocuments({ businessId: user._id }),
-    Room.countDocuments({ lodgingId: { $in: lodgingIds } }),
+    // 총 객실 수량 계산 (각 Room 문서의 countRoom 합산)
+    Room.find({ lodgingId: { $in: lodgingIds.length > 0 ? lodgingIds : [] } })
+      .select('countRoom quantity')
+      .lean(),
+    // 총 예약 수 (전체 예약)
+    Booking.countDocuments({
+      businessUserId: user._id
+    }),
+    // 총 리뷰 개수
+    Review.countDocuments(reviewQuery),
+    // 오늘 예약 수 (호환성을 위해 유지)
     Booking.countDocuments({
       businessUserId: user._id,
       createdAt: { $gte: today }
@@ -52,37 +76,53 @@ const getDashboardStats = async (userId) => {
     })
   ]);
 
-  // 전월 오늘 예약 수 (비교용)
-  const lastMonthTodayStart = new Date(lastMonthStart);
-  lastMonthTodayStart.setDate(today.getDate());
-  const lastMonthTodayEnd = new Date(lastMonthTodayStart);
-  lastMonthTodayEnd.setHours(23, 59, 59, 999);
-  
-  const lastMonthTodayBookings = await Booking.countDocuments({
+  // 총 객실 수량 계산 (각 Room의 countRoom 또는 quantity 합산)
+  const totalRooms = roomsData.reduce((sum, room) => {
+    return sum + (room.countRoom || room.quantity || 1);
+  }, 0);
+
+  // 전월 총 예약 수 (비교용)
+  const lastMonthTotalBookings = await Booking.countDocuments({
     businessUserId: user._id,
     createdAt: { 
-      $gte: lastMonthTodayStart, 
-      $lte: lastMonthTodayEnd 
+      $gte: lastMonthStart, 
+      $lte: lastMonthEnd 
     }
   });
 
-  // 전월 대비 오늘 예약 증감률 계산
-  const todayBookingsChange = lastMonthTodayBookings > 0 
-    ? Math.round(((todayBookings - lastMonthTodayBookings) / lastMonthTodayBookings) * 100)
-    : (todayBookings > 0 ? 100 : 0);
+  // 전월 대비 총 예약 증감률 계산
+  const totalBookingsChange = lastMonthTotalBookings > 0 
+    ? Math.round(((totalBookings - lastMonthTotalBookings) / lastMonthTotalBookings) * 100)
+    : (totalBookings > 0 ? 100 : 0);
 
-  // 전월 활성객실 (전월 마지막 날 기준)
-  const lastMonthLastDay = new Date(lastMonthEnd);
-  lastMonthLastDay.setHours(0, 0, 0, 0);
-  const lastMonthActiveRooms = await Booking.countDocuments({
-    businessUserId: user._id,
-    bookingStatus: { $in: ['confirmed', 'completed'] },
-    checkinDate: { $lte: lastMonthLastDay },
-    checkoutDate: { $gte: lastMonthLastDay }
-  });
+  // 전월 총 객실 수 (비교용 - 객실 수는 변하지 않으므로 0)
+  const totalRoomsChange = 0;
 
-  // 전월 대비 활성객실 증감
-  const activeRoomsChange = activeRooms - lastMonthActiveRooms;
+  // 전월 총 리뷰 개수 (비교용)
+  const lastMonthReviewQuery = lodgingIds.length > 0
+    ? {
+        lodgingId: { $in: lodgingIds },
+        status: 'active',
+        createdAt: { 
+          $gte: lastMonthStart, 
+          $lte: lastMonthEnd 
+        }
+      }
+    : {
+        lodgingId: { $in: [] },
+        status: 'active',
+        createdAt: { 
+          $gte: lastMonthStart, 
+          $lte: lastMonthEnd 
+        }
+      };
+  
+  const lastMonthTotalReviews = await Review.countDocuments(lastMonthReviewQuery);
+
+  // 전월 대비 총 리뷰 증감률 계산
+  const totalReviewsChange = lastMonthTotalReviews > 0 
+    ? Math.round(((totalReviews - lastMonthTotalReviews) / lastMonthTotalReviews) * 100)
+    : (totalReviews > 0 ? 100 : 0);
 
   // 총매출 (전체 기간 누적 매출)
   const allBookings = await Booking.find({
@@ -195,12 +235,12 @@ const getDashboardStats = async (userId) => {
       $match: {
         businessUserId: user._id,
         bookingStatus: { $in: ['confirmed', 'completed'] },
-        createdAt: { $gte: sixMonthsAgo }
+        checkinDate: { $gte: sixMonthsAgo }
       }
     },
     {
       $group: {
-        _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+        _id: { $dateToString: { format: '%Y-%m', date: '$checkinDate' } },
         bookingIds: { $push: '$_id' },
         bookingCount: { $sum: 1 }
       }
@@ -316,12 +356,19 @@ const getDashboardStats = async (userId) => {
 
   // hotel 객체 구성 (프론트엔드 요구 형식)
   const hotel = {
-    todayBookings: todayBookings,
+    totalBookings: totalBookings,
     totalRevenue: totalRevenue,
     totalRooms: totalRooms,
+    totalReviews: totalReviews,
+    totalBookingsChange: totalBookingsChange,
+    totalRevenueChange: totalRevenueChange,
+    totalRoomsChange: totalRoomsChange,
+    totalReviewsChange: totalReviewsChange,
+    // 호환성을 위해 기존 필드도 유지
+    todayBookings: todayBookings,
     activeRooms: activeRooms,
     newMembers: newMembers,
-    newUsers: newMembers, // newMembers와 동일
+    newUsers: newMembers,
     today: {
       bookings: todayBookings,
       revenue: todayRevenue
@@ -381,17 +428,135 @@ const getStatistics = async (userId, params) => {
     throw new Error("BUSINESS_NOT_FOUND");
   }
 
-  // 기본 통계 (대시보드와 유사하지만 쿼리 파라미터로 필터링 가능)
+  // 오늘 날짜 범위
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // 이번 달 시작일
+  const thisMonthStart = new Date();
+  thisMonthStart.setDate(1);
+  thisMonthStart.setHours(0, 0, 0, 0);
+  const thisMonthEnd = new Date();
+  thisMonthEnd.setHours(23, 59, 59, 999);
+
+  // 전월 시작일 및 종료일
+  const lastMonthStart = new Date(thisMonthStart);
+  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+  const lastMonthEnd = new Date(thisMonthStart);
+  lastMonthEnd.setDate(0); // 전월 마지막 날
+  lastMonthEnd.setHours(23, 59, 59, 999);
+
+  // 기본 통계
   const lodgingIds = await Lodging.find({ businessId: user._id }).distinct('_id');
   
+  // 오늘 예약 및 매출 (체크인 날짜 기준)
+  const todayBookings = await Booking.find({
+    businessUserId: user._id,
+    bookingStatus: { $in: ['confirmed', 'completed'] },
+    checkinDate: { $gte: today, $lt: tomorrow }
+  }).select('_id').lean();
+
+  const todayBookingIds = todayBookings.map(b => b._id);
+  const todayPayments = await Payment.find({
+    bookingId: { $in: todayBookingIds }
+  }).lean();
+
+  const todayRevenue = todayPayments.reduce((sum, p) => sum + (p.paid || 0), 0);
+
+  // 이번 달 예약 및 매출 (체크인 날짜 기준)
+  const thisMonthBookings = await Booking.find({
+    businessUserId: user._id,
+    bookingStatus: { $in: ['confirmed', 'completed'] },
+    checkinDate: { $gte: thisMonthStart, $lte: thisMonthEnd }
+  }).select('_id').lean();
+
+  const thisMonthBookingIds = thisMonthBookings.map(b => b._id);
+  const thisMonthPayments = await Payment.find({
+    bookingId: { $in: thisMonthBookingIds }
+  }).lean();
+
+  const thisMonthRevenue = thisMonthPayments.reduce((sum, p) => sum + (p.paid || 0), 0);
+
+  // 이번 달 취소 예약 수
+  const thisMonthCancellations = await Booking.countDocuments({
+    businessUserId: user._id,
+    bookingStatus: 'cancelled',
+    checkinDate: { $gte: thisMonthStart, $lte: thisMonthEnd }
+  });
+
+  // 전월 예약 및 매출 (비교용)
+  const lastMonthBookings = await Booking.find({
+    businessUserId: user._id,
+    bookingStatus: { $in: ['confirmed', 'completed'] },
+    checkinDate: { $gte: lastMonthStart, $lte: lastMonthEnd }
+  }).select('_id').lean();
+
+  const lastMonthBookingIds = lastMonthBookings.map(b => b._id);
+  const lastMonthPayments = await Payment.find({
+    bookingId: { $in: lastMonthBookingIds }
+  }).lean();
+
+  const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + (p.paid || 0), 0);
+
+  // 전월 오늘 예약 수 (비교용)
+  const lastMonthTodayStart = new Date(lastMonthStart);
+  lastMonthTodayStart.setDate(today.getDate());
+  const lastMonthTodayEnd = new Date(lastMonthTodayStart);
+  lastMonthTodayEnd.setHours(23, 59, 59, 999);
+
+  const lastMonthTodayBookings = await Booking.countDocuments({
+    businessUserId: user._id,
+    bookingStatus: { $in: ['confirmed', 'completed'] },
+    checkinDate: { $gte: lastMonthTodayStart, $lte: lastMonthTodayEnd }
+  });
+
+  // 전월 대비 증감률 계산
+  const todayRevenueChange = lastMonthRevenue > 0 
+    ? ((todayRevenue - (lastMonthRevenue / 30)) / (lastMonthRevenue / 30))
+    : (todayRevenue > 0 ? 1 : 0);
+
+  const todayBookingsChange = lastMonthTodayBookings > 0
+    ? ((todayBookings.length - lastMonthTodayBookings) / lastMonthTodayBookings)
+    : (todayBookings.length > 0 ? 1 : 0);
+
+  const thisMonthRevenueChange = lastMonthRevenue > 0
+    ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue)
+    : (thisMonthRevenue > 0 ? 1 : 0);
+
   const [totalLodgings, totalRooms] = await Promise.all([
     Lodging.countDocuments({ businessId: user._id }),
-    Room.countDocuments({ lodgingId: { $in: lodgingIds } })
+    Room.find({ lodgingId: { $in: lodgingIds.length > 0 ? lodgingIds : [] } })
+      .select('countRoom quantity')
+      .lean()
   ]);
+
+  const totalRoomsCount = totalRooms.reduce((sum, room) => {
+    return sum + (room.countRoom || room.quantity || 1);
+  }, 0);
 
   return {
     totalLodgings,
-    totalRooms
+    totalRooms: totalRoomsCount,
+    today: {
+      revenue: todayRevenue,
+      bookings: todayBookings.length,
+      change: {
+        revenue: todayRevenueChange,
+        bookings: todayBookingsChange
+      }
+    },
+    thisMonth: {
+      revenue: thisMonthRevenue,
+      bookings: thisMonthBookings.length,
+      cancellations: thisMonthCancellations,
+      change: {
+        revenue: thisMonthRevenueChange,
+        bookings: 0, // 필요시 계산
+        cancellations: 0 // 필요시 계산
+      }
+    }
   };
 };
 
@@ -407,7 +572,7 @@ const getRevenueStats = async (userId, period = 'month') => {
   const bookings = await Booking.find({
     businessUserId: user._id,
     bookingStatus: { $in: ['confirmed', 'completed'] },
-    createdAt: { $gte: startDate, $lte: endDate }
+    checkinDate: { $gte: startDate, $lte: endDate }
   }).select('_id').lean();
 
   const bookingIds = bookings.map(b => b._id);
@@ -425,12 +590,12 @@ const getRevenueStats = async (userId, period = 'month') => {
       $match: {
         businessUserId: user._id,
         bookingStatus: { $in: ['confirmed', 'completed'] },
-        createdAt: { $gte: startDate, $lte: endDate }
+        checkinDate: { $gte: startDate, $lte: endDate }
       }
     },
     {
       $group: {
-        _id: { $dateToString: { format: period === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$createdAt' } },
+        _id: { $dateToString: { format: period === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$checkinDate' } },
         bookingIds: { $push: '$_id' },
         bookingCount: { $sum: 1 }
       }
@@ -480,13 +645,13 @@ const getBookingStats = async (userId, period = 'month') => {
   const [totalBookings, byStatus] = await Promise.all([
     Booking.countDocuments({
       businessUserId: user._id,
-      createdAt: { $gte: startDate, $lte: endDate }
+      checkinDate: { $gte: startDate, $lte: endDate }
     }),
     Booking.aggregate([
       {
         $match: {
           businessUserId: user._id,
-          createdAt: { $gte: startDate, $lte: endDate }
+          checkinDate: { $gte: startDate, $lte: endDate }
         }
       },
       {
@@ -516,12 +681,12 @@ const getBookingStats = async (userId, period = 'month') => {
     {
       $match: {
         businessUserId: user._id,
-        createdAt: { $gte: startDate, $lte: endDate }
+        checkinDate: { $gte: startDate, $lte: endDate }
       }
     },
     {
       $group: {
-        _id: { $dateToString: { format: period === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$createdAt' } },
+        _id: { $dateToString: { format: period === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$checkinDate' } },
         count: { $sum: 1 }
       }
     },

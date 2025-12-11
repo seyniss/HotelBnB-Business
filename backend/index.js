@@ -21,11 +21,31 @@ const app = express();
 const PORT = process.env.PORT;
 
 // CORS 설정
+const allowedOrigins = process.env.FRONT_ORIGIN 
+  ? process.env.FRONT_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173', 'http://localhost:3001', 'http://localhost:5174'];
+
 app.use(cors({
-  origin: process.env.FRONT_ORIGIN,
+  origin: function (origin, callback) {
+    // origin이 없는 경우 (같은 origin에서 요청하거나 모바일 앱 등)
+    if (!origin) return callback(null, true);
+    
+    // 허용된 origin 목록에 있는지 확인
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // 개발 환경에서는 모든 origin 허용 (선택사항)
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+      }
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: "10mb" }));

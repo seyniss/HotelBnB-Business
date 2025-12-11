@@ -5,8 +5,7 @@ const reviewSchema = new mongoose.Schema(
     lodgingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Lodging',
-      required: true,
-      index: true
+      required: true
     },
     
     userId: {
@@ -19,8 +18,7 @@ const reviewSchema = new mongoose.Schema(
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking',
-      required: true,
-      index: true
+      required: true
     },
     
     rating: {

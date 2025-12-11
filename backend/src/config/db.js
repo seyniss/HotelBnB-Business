@@ -3,10 +3,7 @@ const mongoose = require("mongoose");
 const connectDB = async () => {
   try {
     // .env에 설정한 MONGODB_URI 사용
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
 
     console.log("✅ MongoDB Connected");
   } catch (err) {

@@ -53,8 +53,13 @@ export const BusinessAuthProvider = ({ children }) => {
     try {
       const { businessHotelApi } = await import("../api/businessHotelApi");
       const hotelData = await businessHotelApi.getMyHotel();
-      const hotel = extractApiData(hotelData);
-      return !!(hotel && hotel.id); // 호텔이 존재하는지 확인
+      const extractedData = extractApiData(hotelData);
+      
+      // 배열인 경우 첫 번째 호텔 사용 (백엔드가 배열로 반환할 수 있음)
+      const hotel = Array.isArray(extractedData) ? extractedData[0] : extractedData;
+      
+      // 호텔이 존재하는지 확인 (id 또는 _id가 있으면 존재)
+      return !!(hotel && (hotel.id || hotel._id));
     } catch (error) {
       // 호텔이 없거나 에러가 발생한 경우 (404 등)
       if (error.response?.status === 404) {

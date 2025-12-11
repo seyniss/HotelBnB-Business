@@ -13,14 +13,10 @@ MONGODB_URI=your_mongodb_connection_string
 # 서버 포트
 PORT=3000
 
-# 프론트엔드 Origin
-FRONT_ORIGIN=http://localhost:3001
-
-# 카카오 맵 API 키 (REST API 키)
-# 카카오 개발자 콘솔(https://developers.kakao.com)에서 발급받은 REST API 키를 입력하세요
-# 주소를 좌표로 자동 변환하는 기능에 사용됩니다
-# API 키가 없어도 서비스는 정상 작동하지만, 좌표 변환 기능만 비활성화됩니다
-KAKAO_MAP_API_KEY=your_kakao_rest_api_key_here
+# 프론트엔드 Origin (여러 개는 쉼표로 구분)
+# 예: FRONT_ORIGIN=http://localhost:5173,http://localhost:3001
+# 설정하지 않으면 개발 환경에서 모든 origin 허용
+FRONT_ORIGIN=http://localhost:5173
 
 # JWT Secret (인증 토큰)
 JWT_SECRET=your_jwt_secret_key
@@ -39,7 +35,6 @@ AWS_S3_BUCKET=your_s3_bucket_name
 - 예약 관리
 - 리뷰 관리
 - 통계 대시보드
-- 주소 자동 좌표 변환 (카카오 맵 API)
 
 ## API 명세서
 

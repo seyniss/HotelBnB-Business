@@ -566,6 +566,48 @@
     }
   }
 
+  .form-group {
+    margin-bottom: $spacing-lg;
+
+    label {
+      display: block;
+      margin-bottom: $spacing-sm;
+      font-weight: 500;
+      font-size: $font-size-sm;
+      color: $text-primary;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $border-color;
+      border-radius: $border-radius;
+      font-size: $font-size-sm;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+
+      &.error {
+        border-color: #ef4444;
+        border-width: 2px;
+        
+        &:focus {
+          border-color: #ef4444;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+      }
+    }
+
+    textarea {
+      resize: vertical;
+    }
+  }
+
   .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -573,21 +615,6 @@
     margin-top: $spacing-xl;
     padding-top: $spacing-lg;
     border-top: 1px solid $border-color;
-  }
-
-  textarea {
-    width: 100%;
-    padding: $spacing-sm $spacing-md;
-    border: 1px solid $border-color;
-    border-radius: $border-radius;
-    font-size: $font-size-sm;
-    font-family: inherit;
-    resize: vertical;
-
-    &:focus {
-      outline: none;
-      border-color: $primary-color;
-    }
   }
 
   .facility-selector {

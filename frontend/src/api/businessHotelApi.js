@@ -5,6 +5,10 @@ export const businessHotelApi = {
     return axiosClient.get("/business/hotel");
   },
 
+  getHotelById: async (id) => {
+    return axiosClient.get(`/business/hotel/${id}`);
+  },
+
   createHotel: async (data) => {
     return axiosClient.post("/business/hotel", data);
   },
@@ -15,6 +19,10 @@ export const businessHotelApi = {
       return axiosClient.put(`/business/hotel/${id}`, data);
     }
     return axiosClient.put("/business/hotel", data);
+  },
+
+  deleteHotel: async (id) => {
+    return axiosClient.delete(`/business/hotel/${id}`);
   },
 
   updateHotelImages: async (images) => {
@@ -31,6 +39,10 @@ export const businessHotelApi = {
       lodging_id: lodgingId,
       ...amenities,
     });
+  },
+
+  getAmenityByLodging: async (lodgingId) => {
+    return axiosClient.get(`/business/amenities/lodging/${lodgingId}`);
   },
 
   updateAmenities: async (amenityId, amenities) => {

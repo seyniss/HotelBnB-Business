@@ -1,6 +1,7 @@
 const lodgingService = require("./service");
 const { successResponse, errorResponse } = require("../common/response");
 const mongoose = require("mongoose");
+const Category = require("../category/model");
 
 // 숙소 목록 조회
 const getLodgings = async (req, res) => {
@@ -73,7 +74,7 @@ const createLodging = async (req, res) => {
     } = req.body;
 
     // 필수 필드 검증
-    if (!lodgingName || !address || !rating || !description || !images || !country || !categoryId) {
+    if (!lodgingName || !address || !rating || !description || !images || !country) {
       return res.status(400).json(errorResponse("필수 필드가 누락되었습니다.", 400));
     }
 
@@ -87,8 +88,29 @@ const createLodging = async (req, res) => {
       return res.status(400).json(errorResponse("등급은 1~5 사이의 값이어야 합니다.", 400));
     }
 
+    // categoryId가 없으면 기본 카테고리("호텔") 조회
+    let finalCategoryId = categoryId;
+    if (!finalCategoryId) {
+      try {
+        const defaultCategory = await Category.findOne({ code: 'HOTEL' }).sort({ order: 1 });
+        if (defaultCategory) {
+          finalCategoryId = defaultCategory._id;
+        } else {
+          // 기본 카테고리가 없으면 첫 번째 활성 카테고리 사용
+          const firstCategory = await Category.findOne({ isActive: true }).sort({ order: 1 });
+          if (firstCategory) {
+            finalCategoryId = firstCategory._id;
+          } else {
+            return res.status(400).json(errorResponse("카테고리를 찾을 수 없습니다. 관리자에게 문의하세요.", 400));
+          }
+        }
+      } catch (catErr) {
+        return res.status(500).json(errorResponse("카테고리 조회 중 오류가 발생했습니다.", 500));
+      }
+    }
+
     // categoryId 검증
-    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    if (!mongoose.Types.ObjectId.isValid(finalCategoryId)) {
       return res.status(400).json(errorResponse("잘못된 categoryId 형식입니다.", 400));
     }
 
@@ -112,7 +134,7 @@ const createLodging = async (req, res) => {
       description,
       images,
       country,
-      categoryId,
+      categoryId: finalCategoryId,
       hashtag,
       bbqGrill,
       netflix,

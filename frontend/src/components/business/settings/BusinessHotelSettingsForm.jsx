@@ -12,7 +12,7 @@ const FACILITY_OPTIONS = [
   { value: "gamingPc", label: "게이밍PC", icon: "🎮" },
 ];
 
-const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
+const BusinessHotelSettingsForm = ({ hotel, onSubmit, externalErrors = {}, onErrorsChange }) => {
   const [formData, setFormData] = useState({
     lodgingName: "",
     description: "",
@@ -23,7 +23,43 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
     policies: "",
     amenities: [],
   });
+  const [errors, setErrors] = useState({});
   const addressInputRef = useRef(null);
+
+  // 외부에서 전달된 에러를 내부 에러 상태에 반영
+  useEffect(() => {
+    if (Object.keys(externalErrors).length > 0) {
+      console.log("외부 에러 받음:", externalErrors);
+      setErrors(externalErrors);
+      console.log("에러 상태 업데이트 후:", externalErrors);
+      // 첫 번째 에러 필드로 스크롤
+      setTimeout(() => {
+        const firstErrorField = Object.keys(externalErrors)[0];
+        if (firstErrorField) {
+          const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+          console.log("에러 필드 요소:", errorElement, "필드명:", firstErrorField);
+          if (errorElement) {
+            // className 확인
+            console.log("에러 필드 className:", errorElement.className);
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+              errorElement.focus();
+            }, 300);
+          } else {
+            console.warn("에러 필드를 찾을 수 없음:", firstErrorField);
+          }
+        }
+      }, 100);
+    } else {
+      // 외부 에러가 없으면 내부 에러도 초기화하지 않음 (사용자가 입력 중일 수 있음)
+      // setErrors({});
+    }
+  }, [externalErrors]);
+  
+  // errors 상태 변경 시 로그 출력
+  useEffect(() => {
+    console.log("현재 errors 상태:", errors);
+  }, [errors]);
 
   useEffect(() => {
     if (hotel) {
@@ -49,6 +85,16 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // 입력 시 해당 필드의 에러 제거
+    if (errors[name]) {
+      const newErrors = { ...errors };
+      delete newErrors[name];
+      setErrors(newErrors);
+      // 외부 에러 상태도 업데이트
+      if (onErrorsChange) {
+        onErrorsChange(newErrors);
+      }
+    }
   };
 
   const toggleAmenity = (value) => {
@@ -122,6 +168,53 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // 폼 검증
+    const validationErrors = {};
+    
+    // 호텔명 검증
+    if (!formData.lodgingName || formData.lodgingName.trim() === "") {
+      validationErrors.lodgingName = "호텔명을 입력해주세요.";
+    }
+    
+    // 호텔 소개 검증
+    if (!formData.description || formData.description.trim() === "") {
+      validationErrors.description = "호텔 소개를 입력해주세요.";
+    }
+    
+    // 주소 검증
+    if (!formData.address || formData.address.trim() === "") {
+      validationErrors.address = "주소를 검색해주세요.";
+    }
+    
+    // 연락처 검증
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+      validationErrors.phoneNumber = "연락처를 입력해주세요.";
+    }
+    
+    // 에러가 있으면 표시하고 중단
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      // 첫 번째 에러 필드로 스크롤 및 포커스
+      setTimeout(() => {
+        const firstErrorField = Object.keys(validationErrors)[0];
+        if (firstErrorField) {
+          const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+          if (errorElement) {
+            // 스크롤을 먼저 하고 포커스
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+              errorElement.focus();
+            }, 300);
+          }
+        }
+      }, 100);
+      return;
+    }
+    
+    // 에러가 없으면 에러 상태 초기화
+    setErrors({});
+    
     // 주소와 상세 주소를 합쳐서 전송
     const submitData = {
       ...formData,
@@ -137,28 +230,43 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
       <h4>호텔 정보</h4>
 
       <div className="form-group">
-        <label>호텔명</label>
+        <label>호텔명 <span style={{ color: 'red' }}>*</span></label>
         <input
           type="text"
           name="lodgingName"
           value={formData.lodgingName}
           onChange={handleChange}
+          className={errors.lodgingName ? 'error' : ''}
+          style={errors.lodgingName ? { border: '2px solid #ef4444' } : {}}
           required
         />
+        {errors.lodgingName && (
+          <span className="error-message" style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+            {errors.lodgingName}
+          </span>
+        )}
       </div>
 
       <div className="form-group">
-        <label>호텔 소개</label>
+        <label>호텔 소개 <span style={{ color: 'red' }}>*</span></label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
+          className={errors.description ? 'error' : ''}
+          style={errors.description ? { border: '2px solid #ef4444' } : {}}
           rows={4}
+          required
         />
+        {errors.description && (
+          <span className="error-message" style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+            {errors.description}
+          </span>
+        )}
       </div>
 
       <div className="form-group">
-        <label>주소</label>
+        <label>주소 <span style={{ color: 'red' }}>*</span></label>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
           <input
             ref={addressInputRef}
@@ -167,8 +275,12 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
             value={formData.address}
             onChange={handleChange}
             placeholder="주소를 검색하세요"
+            className={errors.address ? 'error' : ''}
+            style={{ 
+              flex: 1,
+              ...(errors.address ? { border: '2px solid #ef4444' } : {})
+            }}
             required
-            style={{ flex: 1 }}
             readOnly
           />
           <button
@@ -180,6 +292,11 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
             주소 검색
           </button>
         </div>
+        {errors.address && (
+          <span className="error-message" style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.25rem', marginBottom: '0.5rem', display: 'block' }}>
+            {errors.address}
+          </span>
+        )}
         <input
           type="text"
           name="detailAddress"
@@ -191,13 +308,21 @@ const BusinessHotelSettingsForm = ({ hotel, onSubmit }) => {
       </div>
 
       <div className="form-group">
-        <label>연락처</label>
+        <label>연락처 <span style={{ color: 'red' }}>*</span></label>
         <input
           type="tel"
           name="phoneNumber"
           value={formData.phoneNumber}
           onChange={handleChange}
+          className={errors.phoneNumber ? 'error' : ''}
+          style={errors.phoneNumber ? { border: '2px solid #ef4444' } : {}}
+          required
         />
+        {errors.phoneNumber && (
+          <span className="error-message" style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+            {errors.phoneNumber}
+          </span>
+        )}
       </div>
 
       <div className="form-group">

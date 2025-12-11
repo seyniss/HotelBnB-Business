@@ -71,8 +71,7 @@ const lodgingSchema = new mongoose.Schema(
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: true,
-      index: true
+      required: true
     },
     
     bookingId: {

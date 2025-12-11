@@ -3,8 +3,7 @@ const Amenity = require("../amenity/model");
 const Booking = require("../booking/model");
 const Room = require("../room/model");
 const BusinessUser = require("../auth/model");
-const Category = require("../category/model"); 
-const { addressToCoordinates } = require("../common/kakaoMap");
+const Category = require("../category/model");
 
 // 숙소 목록 조회
 const getLodgings = async (userId) => {
@@ -219,21 +218,8 @@ const createLodging = async (lodgingData, userId) => {
     imagesArray = [images];
   }
 
-  // 주소를 좌표로 변환 (주소가 있고 lat, lng가 제공되지 않은 경우에만)
+  // 좌표는 직접 제공된 경우에만 사용
   let coordinates = { lat, lng };
-  if ((!lat || !lng) && address && address.trim().length > 0) {
-    try {
-      coordinates = await addressToCoordinates(address);
-    } catch (error) {
-      // 좌표 변환 실패해도 에러를 발생시키지 않고 스킵
-      // API 키가 없는 경우는 이미 경고가 출력되었으므로 간단한 로그만 출력
-      const isApiKeyError = error.message.includes('KAKAO_MAP_API_KEY');
-      if (!isApiKeyError) {
-        console.warn(`⚠️  주소 좌표 변환 실패 (스킵): ${address} - ${error.message}`);
-      }
-      coordinates = { lat: undefined, lng: undefined };
-    }
-  }
 
   const lodgingDataToCreate = {
     businessId: user._id,
@@ -390,31 +376,10 @@ const updateLodging = async (lodgingId, lodgingData, userId) => {
     }
   }
 
-  // 주소가 변경되었거나 lat/lng가 제공되지 않은 경우 좌표 재변환
-  if (address !== undefined || lat !== undefined || lng !== undefined) {
-    if (lat !== undefined && lng !== undefined) {
-      // 좌표가 직접 제공된 경우
-      updates.lat = lat;
-      updates.lng = lng;
-    } else {
-      // 주소를 기반으로 좌표 변환 (주소가 있는 경우에만)
-      const addressToUse = address !== undefined ? address : lodging.address;
-      if (addressToUse && addressToUse.trim().length > 0) {
-        try {
-          const coordinates = await addressToCoordinates(addressToUse);
-          updates.lat = coordinates.lat;
-          updates.lng = coordinates.lng;
-        } catch (error) {
-          // 좌표 변환 실패해도 에러를 발생시키지 않고 스킵
-          // API 키가 없는 경우는 이미 경고가 출력되었으므로 간단한 로그만 출력
-          const isApiKeyError = error.message.includes('KAKAO_MAP_API_KEY');
-          if (!isApiKeyError) {
-            console.warn(`⚠️  주소 좌표 변환 실패 (스킵): ${addressToUse} - ${error.message}`);
-          }
-          // 좌표를 업데이트하지 않음 (기존 값 유지 또는 undefined)
-        }
-      }
-    }
+  // 좌표는 직접 제공된 경우에만 업데이트
+  if (lat !== undefined && lng !== undefined) {
+    updates.lat = lat;
+    updates.lng = lng;
   }
 
   // 사업자명이 변경된 경우 업데이트

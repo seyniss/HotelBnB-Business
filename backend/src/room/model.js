@@ -5,8 +5,7 @@ const roomSchema = new mongoose.Schema(
     lodgingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Lodging',
-      required: true,
-      index: true
+      required: true
     },
     
     // 실제 데이터 필드명

@@ -7,8 +7,7 @@ const amenitySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Lodging',
       required: true,
-      unique: true,
-      index: true
+      unique: true
     },
     
     // 편의시설 옵션들
@@ -54,8 +53,6 @@ const amenitySchema = new mongoose.Schema(
     collection: 'amenities'
   }
 );
-
-amenitySchema.index({ lodgingId: 1 });
 
 module.exports = mongoose.model('Amenity', amenitySchema);
 

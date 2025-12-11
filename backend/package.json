@@ -8,7 +8,8 @@
     "dev": "nodemon index.js",
     "start": "node index.js",
     "seed": "node scripts/seed.js",
-    "seed:bookings": "node scripts/seedBookings.js"
+    "seed:bookings": "node scripts/seedBookings.js",
+    "seed:dashboard": "node scripts/seed-dashboard-data.js"
   },
   "keywords": [],
   "author": "",

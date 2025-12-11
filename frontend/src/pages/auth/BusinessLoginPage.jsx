@@ -100,6 +100,23 @@ const BusinessLoginPage = () => {
         <div className="auth-form-container">
           <h1>Login</h1>
           <p className="auth-subtitle">사업자 로그인</p>
+          
+          <div className="test-account-info" style={{
+            background: 'rgba(127, 216, 190, 0.08)',
+            border: '1px solid rgba(127, 216, 190, 0.2)',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            marginBottom: '16px',
+            fontSize: '0.75rem'
+          }}>
+            <div style={{ fontWeight: 500, color: '#7FD8BE', marginBottom: '4px', fontSize: '0.75rem' }}>
+              테스트 계정
+            </div>
+            <div style={{ color: '#64748b', lineHeight: '1.5', fontSize: '0.75rem' }}>
+              <div>이메일: <strong style={{ color: '#0f172a' }}>biz@business.com</strong></div>
+              <div>비밀번호: <strong style={{ color: '#0f172a' }}>biz1234</strong></div>
+            </div>
+          </div>
 
           {error && <div className="auth-error">{error}</div>}
 

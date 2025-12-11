@@ -5,6 +5,10 @@ export const businessReviewApi = {
     return axiosClient.get("/business/reviews", { params });
   },
 
+  getReviewsByLodging: async (lodgingId, params) => {
+    return axiosClient.get(`/business/reviews/lodging/${lodgingId}`, { params });
+  },
+
   getReviewById: async (id) => {
     return axiosClient.get(`/business/reviews/${id}`);
   },
