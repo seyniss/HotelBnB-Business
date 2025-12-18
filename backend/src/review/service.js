@@ -177,7 +177,9 @@ const getReviewsByLodging = async (lodgingId, filters) => {
       rating: review.rating,
       comment: review.content,
       date: review.createdAt ? new Date(review.createdAt).toISOString().split('T')[0] : '',
-      status: reviewStatus
+      status: reviewStatus,
+      reply: review.reply || null
+      
     };
   });
 
