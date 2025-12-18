@@ -8,7 +8,7 @@ const Room = require("../room/model");
 // 리뷰 신고
 const reportReview = async (reviewId, reason, userId) => {
   // 리뷰 확인
-  const review = await Review.findById(reviewId).populate('lodgingId', 'userId');
+  const review = await Review.findById(reviewId).populate('lodgingId', 'businessId');
   if (!review) {
     throw new Error("REVIEW_NOT_FOUND");
   }
@@ -20,7 +20,7 @@ const reportReview = async (reviewId, reason, userId) => {
   }
 
   // 해당 호텔의 소유자인지 확인
-  if (review.lodgingId.userId.toString() !== user._id.toString()) {
+  if (review.lodgingId.businessId.toString() !== user._id.toString()) {
     throw new Error("UNAUTHORIZED");
   }
 

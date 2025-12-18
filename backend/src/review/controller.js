@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 // 리뷰 신고
 const reportReview = async (req, res) => {
   try {
+
     const { reason } = req.body;
 
     if (!reason || reason.trim().length === 0) {
