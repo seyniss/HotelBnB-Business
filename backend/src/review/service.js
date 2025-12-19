@@ -1,6 +1,7 @@
 const Review = require("./model");
 const ReviewReport = require("./reviewReport");
 const Booking = require("../booking/model");
+const BookingItem = require("../bookingItem/model");
 const Lodging = require("../lodging/model");
 const BusinessUser = require("../auth/model");
 const Room = require("../room/model");
@@ -150,11 +151,7 @@ const getReviewsByLodging = async (lodgingId, filters) => {
       .populate('lodgingId', 'name')
       .populate({
         path: 'bookingId',
-        select: 'checkinDate checkoutDate bookingStatus',
-        populate: {
-          path: 'roomId',
-          select: 'name'
-        }
+        select: 'checkinDate checkoutDate bookingStatus'
       })
       .sort({ createdAt: -1 }) // 최신순 정렬
       .skip(skip)
@@ -163,6 +160,19 @@ const getReviewsByLodging = async (lodgingId, filters) => {
     Review.countDocuments(query)
   ]);
 
+  // BookingItem을 통해 room 정보 조회
+  const bookingIds = reviews.map(r => r.bookingId?._id || r.bookingId).filter(Boolean);
+  const bookingItems = await BookingItem.find({ 
+    bookingId: { $in: bookingIds } 
+  }).lean();
+
+  const roomIds = [...new Set(bookingItems.map(item => item.roomId))];
+  const rooms = await Room.find({ _id: { $in: roomIds } })
+    .select('_id name')
+    .lean();
+
+  const roomMap = new Map(rooms.map(r => [r._id.toString(), r.name]));
+
   // 프론트엔드 요구사항에 맞게 응답 형식 변환
   const formattedReviews = reviews.map(review => {
     // status 매핑: active → approved, blocked → reported, 기타 → pending
@@ -170,10 +180,19 @@ const getReviewsByLodging = async (lodgingId, filters) => {
     if (review.status === 'active') reviewStatus = 'approved';
     else if (review.status === 'blocked') reviewStatus = 'reported';
     
+    // BookingItem에서 첫 번째 room 정보 가져오기
+    const bookingId = review.bookingId?._id?.toString() || review.bookingId?.toString();
+    const bookingItem = bookingItems.find(item => 
+      item.bookingId.toString() === bookingId
+    );
+    const roomName = bookingItem 
+      ? (roomMap.get(bookingItem.roomId.toString()) || 'Unknown')
+      : 'Unknown';
+    
     return {
       id: review._id.toString(),
       guestName: review.userId?.name || 'Unknown',
-      roomType: review.bookingId?.roomId?.name || 'Unknown',
+      roomType: roomName,
       rating: review.rating,
       comment: review.content,
       date: review.createdAt ? new Date(review.createdAt).toISOString().split('T')[0] : '',
@@ -248,11 +267,7 @@ const getReviews = async (userId, filters) => {
       .populate('lodgingId', 'lodgingName')
       .populate({
         path: 'bookingId',
-        select: 'checkinDate checkoutDate bookingStatus',
-        populate: {
-          path: 'roomId',
-          select: 'roomName name'
-        }
+        select: 'checkinDate checkoutDate bookingStatus'
       })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -260,6 +275,19 @@ const getReviews = async (userId, filters) => {
       .lean(),
     Review.countDocuments(query)
   ]);
+
+  // BookingItem을 통해 room 정보 조회
+  const bookingIds = reviews.map(r => r.bookingId?._id || r.bookingId).filter(Boolean);
+  const bookingItems = await BookingItem.find({ 
+    bookingId: { $in: bookingIds } 
+  }).lean();
+
+  const roomIds = [...new Set(bookingItems.map(item => item.roomId))];
+  const rooms = await Room.find({ _id: { $in: roomIds } })
+    .select('_id name roomName')
+    .lean();
+
+  const roomMap = new Map(rooms.map(r => [r._id.toString(), r.name || r.roomName || 'Unknown']));
 
   // 디버깅: 조회 결과 확인
   console.log(`🔍 조회된 리뷰 개수: ${reviews.length}개 (전체: ${total}개)`);
@@ -278,10 +306,19 @@ const getReviews = async (userId, filters) => {
     if (review.status === 'active') reviewStatus = 'approved';
     else if (review.status === 'blocked') reviewStatus = 'reported';
     
+    // BookingItem에서 첫 번째 room 정보 가져오기
+    const bookingId = review.bookingId?._id?.toString() || review.bookingId?.toString();
+    const bookingItem = bookingItems.find(item => 
+      item.bookingId.toString() === bookingId
+    );
+    const roomName = bookingItem 
+      ? (roomMap.get(bookingItem.roomId.toString()) || 'Unknown')
+      : 'Unknown';
+    
     return {
       id: review._id.toString(),
       guestName: review.userId?.name || 'Unknown',
-      roomType: review.bookingId?.roomId?.name || 'Unknown',
+      roomType: roomName,
       rating: review.rating,
       comment: review.content,
       date: review.createdAt ? new Date(review.createdAt).toISOString().split('T')[0] : '',
@@ -329,16 +366,21 @@ const getReviewById = async (reviewId, userId) => {
     .populate('lodgingId', 'name')
     .populate({
       path: 'bookingId',
-      select: 'checkinDate checkoutDate bookingStatus',
-      populate: {
-        path: 'roomId',
-        select: 'name'
-      }
+      select: 'checkinDate checkoutDate bookingStatus'
     })
     .lean();
 
   if (!review) {
     throw new Error("REVIEW_NOT_FOUND");
+  }
+
+  // BookingItem을 통해 room 정보 조회
+  const bookingId = review.bookingId?._id || review.bookingId;
+  const bookingItem = await BookingItem.findOne({ bookingId }).lean();
+  let roomName = 'Unknown';
+  if (bookingItem) {
+    const room = await Room.findById(bookingItem.roomId).select('name').lean();
+    roomName = room?.name || 'Unknown';
   }
 
   // 프론트엔드 요구사항에 맞게 응답 형식 변환
@@ -349,7 +391,7 @@ const getReviewById = async (reviewId, userId) => {
   return {
     id: review._id.toString(),
     guestName: review.userId?.name || 'Unknown',
-    roomType: review.bookingId?.roomId?.name || 'Unknown',
+    roomType: roomName,
     rating: review.rating,
     comment: review.content,
     date: review.createdAt ? new Date(review.createdAt).toISOString().split('T')[0] : '',

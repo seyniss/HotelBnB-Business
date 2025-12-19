@@ -1,4 +1,5 @@
 const Booking = require("../booking/model");
+const BookingItem = require("../bookingItem/model");
 const Payment = require("../booking/payment");
 const Lodging = require("../lodging/model");
 const Room = require("../room/model");
@@ -296,16 +297,32 @@ const getDashboardStats = async (userId) => {
   const recentBookings = await Booking.find({
     businessUserId: user._id
   })
-    .populate('roomId', 'name lodgingId')
     .populate('userId', 'name email')
     .sort({ createdAt: -1 })
     .limit(10)
     .lean();
 
+  // BookingItem을 통해 roomId와 lodgingId 조회
+  const bookingIds = recentBookings.map(b => b._id);
+  const bookingItems = await BookingItem.find({ 
+    bookingId: { $in: bookingIds } 
+  }).lean();
+
+  const roomIds = [...new Set(bookingItems.map(item => item.roomId))];
+  const rooms = await Room.find({ _id: { $in: roomIds } })
+    .select('_id lodgingId')
+    .lean();
+
+  const roomMap = new Map(rooms.map(r => [r._id.toString(), r.lodgingId]));
+
   // lodging ID 목록 수집 (중복 제거)
   const recentLodgingIdStrings = recentBookings
     .map(b => {
-      const lodgingId = b.roomId?.lodgingId;
+      const bookingItem = bookingItems.find(item => 
+        item.bookingId.toString() === b._id.toString()
+      );
+      if (!bookingItem) return null;
+      const lodgingId = roomMap.get(bookingItem.roomId.toString());
       if (!lodgingId) return null;
       // ObjectId 객체이거나 문자열일 수 있으므로 toString()으로 통일
       return lodgingId.toString ? lodgingId.toString() : String(lodgingId);
@@ -326,7 +343,12 @@ const getDashboardStats = async (userId) => {
 
   // 최근 예약 정보 포맷팅 (프론트엔드 요구 형식)
   const formattedRecentBookings = recentBookings.map((booking) => {
-    const lodgingId = booking.roomId?.lodgingId?.toString();
+    const bookingItem = bookingItems.find(item => 
+      item.bookingId.toString() === booking._id.toString()
+    );
+    const lodgingId = bookingItem 
+      ? roomMap.get(bookingItem.roomId.toString())?.toString()
+      : null;
     const lodgingName = lodgingId ? (lodgingMap.get(lodgingId) || 'Unknown') : 'Unknown';
     const guestName = booking.userId?.name || 'Unknown';
 
@@ -722,8 +744,12 @@ const getOccupancyStats = async (userId, period = 'month') => {
     checkoutDate: { $gte: startDate }
   }).lean();
 
-  // 예약된 객실 수 계산 (날짜별로)
-  const occupiedRooms = bookings.length; // 간단한 계산, 실제로는 날짜별로 계산 필요
+  // 예약된 객실 수 계산 (BookingItem의 quantity 합산)
+  const bookingIds = bookings.map(b => b._id);
+  const items = await BookingItem.find({ 
+    bookingId: { $in: bookingIds } 
+  }).lean();
+  const occupiedRooms = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
 
@@ -734,16 +760,29 @@ const getOccupancyStats = async (userId, period = 'month') => {
       const lodgingTotalRooms = lodgingRooms.reduce((sum, r) => sum + (r.quantity || r.countRoom || 1), 0);
       const lodgingRoomIds = lodgingRooms.map(r => r._id);
       
-      const lodgingBookings = await Booking.countDocuments({
+      // BookingItem을 통해 해당 lodging의 roomId를 가진 예약 찾기
+      const bookingIdsWithRooms = await BookingItem.find({ 
+        roomId: { $in: lodgingRoomIds } 
+      }).distinct('bookingId');
+
+      const lodgingBookings = await Booking.find({
         businessUserId: user._id,
-        roomId: { $in: lodgingRoomIds },
+        _id: { $in: bookingIdsWithRooms },
         bookingStatus: { $in: ['confirmed', 'completed'] },
         checkinDate: { $lte: endDate },
         checkoutDate: { $gte: startDate }
-      });
+      }).select('_id').lean();
+
+      // BookingItem의 quantity 합산
+      const lodgingBookingIds = lodgingBookings.map(b => b._id);
+      const lodgingItems = await BookingItem.find({ 
+        bookingId: { $in: lodgingBookingIds },
+        roomId: { $in: lodgingRoomIds }
+      }).lean();
+      const occupiedRoomsCount = lodgingItems.reduce((sum, item) => sum + item.quantity, 0);
 
       const lodgingOccupancyRate = lodgingTotalRooms > 0 
-        ? (lodgingBookings / lodgingTotalRooms) * 100 
+        ? (occupiedRoomsCount / lodgingTotalRooms) * 100 
         : 0;
 
       const lodging = await Lodging.findById(lodgingId).select('name').lean();
@@ -752,30 +791,45 @@ const getOccupancyStats = async (userId, period = 'month') => {
         lodgingId,
         lodgingName: lodging?.lodgingName || 'Unknown',
         totalRooms: lodgingTotalRooms,
-        occupiedRooms: lodgingBookings,
+        occupiedRooms: occupiedRoomsCount,
         occupancyRate: Math.round(lodgingOccupancyRate * 10) / 10
       };
     })
   );
 
-  // 일별 점유율 계산
-  const dailyOccupancy = await Booking.aggregate([
-    {
-      $match: {
-        businessUserId: user._id,
-        bookingStatus: { $in: ['confirmed', 'completed'] },
-        checkinDate: { $lte: endDate },
-        checkoutDate: { $gte: startDate }
-      }
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: period === 'year' ? '%Y-%m' : '%Y-%m-%d', date: '$checkinDate' } },
-        count: { $sum: 1 }
-      }
-    },
-    { $sort: { _id: 1 } }
-  ]);
+  // 일별 점유율 계산 (BookingItem의 quantity 합산)
+  const dailyBookings = await Booking.find({
+    businessUserId: user._id,
+    bookingStatus: { $in: ['confirmed', 'completed'] },
+    checkinDate: { $lte: endDate },
+    checkoutDate: { $gte: startDate }
+  }).select('_id checkinDate').lean();
+
+  const dailyBookingIds = dailyBookings.map(b => b._id);
+  const dailyItems = await BookingItem.find({ 
+    bookingId: { $in: dailyBookingIds } 
+  }).lean();
+
+  // 날짜별로 quantity 합산
+  const dateQuantityMap = new Map();
+  dailyBookings.forEach(booking => {
+    const dateKey = period === 'year' 
+      ? booking.checkinDate.toISOString().substring(0, 7) // YYYY-MM
+      : booking.checkinDate.toISOString().substring(0, 10); // YYYY-MM-DD
+    
+    const items = dailyItems.filter(item => 
+      item.bookingId.toString() === booking._id.toString()
+    );
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    
+    const current = dateQuantityMap.get(dateKey) || 0;
+    dateQuantityMap.set(dateKey, current + totalQuantity);
+  });
+
+  // 날짜 순서대로 정렬
+  const dailyOccupancy = Array.from(dateQuantityMap.entries())
+    .map(([date, count]) => ({ _id: date, count }))
+    .sort((a, b) => a._id.localeCompare(b._id));
 
   // 프론트엔드 요구사항에 맞게 응답 형식 변환
   return {

@@ -1,6 +1,7 @@
 const Lodging = require("./model");
 const Amenity = require("../amenity/model");
 const Booking = require("../booking/model");
+const BookingItem = require("../bookingItem/model");
 const Room = require("../room/model");
 const BusinessUser = require("../auth/model");
 const Category = require("../category/model");
@@ -417,8 +418,8 @@ const deleteLodging = async (lodgingId, userId) => {
   const rooms = await Room.find({ lodgingId: lodgingId }).select('_id');
   const roomIds = rooms.map(r => r._id);
   if (roomIds.length > 0) {
-    const Booking = require("../booking/model");
-    const hasBookings = await Booking.exists({ roomId: { $in: roomIds } });
+    // BookingItem을 통해 해당 roomId를 가진 예약이 있는지 확인
+    const hasBookings = await BookingItem.exists({ roomId: { $in: roomIds } });
     if (hasBookings) {
       throw new Error("HAS_BOOKINGS");
     }

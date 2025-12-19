@@ -2,6 +2,7 @@ const Room = require("./model");
 const RoomPicture = require("../picture/model");
 const Notice = require("../notice/model");
 const Booking = require("../booking/model");
+const BookingItem = require("../bookingItem/model");
 const Lodging = require("../lodging/model");
 const BusinessUser = require("../auth/model");
 
@@ -412,7 +413,8 @@ const deleteRoom = async (roomId, userId) => {
     throw new Error("UNAUTHORIZED");
   }
 
-  const hasBookings = await Booking.exists({ roomId: roomId });
+  // BookingItem을 통해 해당 roomId를 가진 예약이 있는지 확인
+  const hasBookings = await BookingItem.exists({ roomId: roomId });
   if (hasBookings) {
     throw new Error("HAS_BOOKINGS");
   }

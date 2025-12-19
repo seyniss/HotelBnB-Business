@@ -2,12 +2,13 @@ const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
   {
-    roomId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Room',  
-      required: true,
-      index: true
-    },
+    // roomId 필드 제거 - BookingItem으로 이동
+    // roomId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: 'Room',  
+    //   required: true,
+    //   index: true
+    // },
     
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -58,6 +59,13 @@ const bookingSchema = new mongoose.Schema(
       default: 'pending'
     },
     
+    pendingExpiresAt: {
+      type: Date,
+      default: null,
+      index: true
+      // pending 상태 예약의 만료 시간 (만료 시 자동 취소)
+    },
+    
     cancellationReason: {
       type: String,
       trim: true,
@@ -87,11 +95,15 @@ const bookingSchema = new mongoose.Schema(
 
 // 인덱스
 bookingSchema.index({ businessUserId: 1, createdAt: -1 });
-bookingSchema.index({ roomId: 1, bookingStatus: 1 });
+// roomId 인덱스 제거 (BookingItem으로 이동)
+// bookingSchema.index({ roomId: 1, bookingStatus: 1 });
 bookingSchema.index({ checkinDate: 1, checkoutDate: 1 });
 bookingSchema.index({ bookingStatus: 1 });
-// 날짜 겹침 쿼리 최적화를 위한 복합 인덱스
-bookingSchema.index({ roomId: 1, bookingStatus: 1, checkinDate: 1, checkoutDate: 1 });
+// 날짜 겹침 쿼리 최적화를 위한 복합 인덱스 (roomId 제거)
+// bookingSchema.index({ roomId: 1, bookingStatus: 1, checkinDate: 1, checkoutDate: 1 });
+bookingSchema.index({ businessUserId: 1, bookingStatus: 1, checkinDate: 1, checkoutDate: 1 });
+// pending 만료 예약 조회 최적화
+bookingSchema.index({ bookingStatus: 1, pendingExpiresAt: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);
 

@@ -9,18 +9,36 @@ const createBooking = async (req, res) => {
     // 프론트엔드는 checkIn, checkOut, checkinDate, checkoutDate 등 다양한 형식을 보낼 수 있음
     const checkin_date = req.body.checkIn || req.body.checkin_date || req.body.checkinDate;
     const checkout_date = req.body.checkOut || req.body.checkout_date || req.body.checkoutDate;
-    const room_id = req.body.roomId || req.body.room_id;
-    const { adult, child } = req.body;
-    const user_id = req.user.id; // 로그인한 사용자의 ID 사용
-
-    // 필수 필드 검증
-    if (!room_id || !checkin_date || !checkout_date) {
-      return res.status(400).json(errorResponse("필수 필드가 누락되었습니다. (roomId, checkIn, checkOut)", 400));
+    const { adult, child, items } = req.body;
+    
+    // 하위 호환성: roomId가 있으면 items로 변환
+    let bookingItems = items;
+    if (!bookingItems && (req.body.roomId || req.body.room_id)) {
+      const room_id = req.body.roomId || req.body.room_id;
+      bookingItems = [{ room_id, quantity: 1 }];
     }
 
-    // ObjectId 형식 검증
-    if (!mongoose.Types.ObjectId.isValid(room_id)) {
-      return res.status(400).json(errorResponse("잘못된 room_id 형식입니다.", 400));
+    // 필수 필드 검증
+    if (!bookingItems || !Array.isArray(bookingItems) || bookingItems.length === 0 || !checkin_date || !checkout_date) {
+      return res.status(400).json(errorResponse("필수 필드가 누락되었습니다. (items 배열, checkIn, checkOut)", 400));
+    }
+
+    // items 검증
+    for (const item of bookingItems) {
+      const room_id = item.room_id || item.roomId;
+      const quantity = item.quantity || 1;
+      
+      if (!room_id) {
+        return res.status(400).json(errorResponse("items 배열의 각 항목에 room_id가 필요합니다.", 400));
+      }
+      
+      if (!mongoose.Types.ObjectId.isValid(room_id)) {
+        return res.status(400).json(errorResponse(`잘못된 room_id 형식입니다: ${room_id}`, 400));
+      }
+      
+      if (quantity < 1) {
+        return res.status(400).json(errorResponse("quantity는 1 이상이어야 합니다.", 400));
+      }
     }
 
     // 날짜 형식 검증 및 변환
@@ -56,8 +74,7 @@ const createBooking = async (req, res) => {
     }
 
     const result = await bookingService.createBooking({
-      room_id,
-      user_id,
+      items: bookingItems,
       adult: adultCount,
       child: childCount,
       checkin_date: checkinDate,
@@ -86,6 +103,15 @@ const createBooking = async (req, res) => {
     }
     if (error.message === "ROOM_NOT_AVAILABLE") {
       return res.status(409).json(errorResponse("해당 기간에 예약 가능한 방이 없습니다.", 409));
+    }
+    if (error.message === "INVALID_ITEMS") {
+      return res.status(400).json(errorResponse("유효하지 않은 items 배열입니다.", 400));
+    }
+    if (error.message === "INVALID_DATE_RANGE") {
+      return res.status(400).json(errorResponse("유효하지 않은 날짜 범위입니다.", 400));
+    }
+    if (error.message === "MIXED_BUSINESS_NOT_ALLOWED") {
+      return res.status(400).json(errorResponse("다른 사업자 소속 객실은 한 주문에서 예약할 수 없습니다.", 400));
     }
 
     return res.status(500).json(errorResponse("서버 오류", 500, error.message));
@@ -228,6 +254,7 @@ const getBookingStats = async (req, res) => {
 };
 
 module.exports = {
+  createBooking,
   getBookings,
   getBookingById,
   updateBookingStatus,

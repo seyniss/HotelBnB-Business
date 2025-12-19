@@ -13,6 +13,7 @@ const roomRoutes = require("./src/room/route");
 const reviewRoutes = require("./src/review/route");
 const amenityRoutes = require("./src/amenity/route");
 const statsRoutes = require("./src/stats/route");
+const availabilityRoutes = require("./src/availability/route");
 
 const app = express();
 const PORT = process.env.PORT;
@@ -52,6 +53,24 @@ app.use(cookieParser());
 const { connectDB } = require("./src/config/db");
 connectDB();
 
+// 만료된 pending 예약 자동 취소 스케줄러
+const bookingService = require("./src/booking/service");
+const EXPIRY_CHECK_INTERVAL_MS = 60000; // 1분마다 체크 (환경변수로 설정 가능)
+
+setInterval(async () => {
+  try {
+    const result = await bookingService.expirePendingBookings();
+    if (result.expiredCount > 0) {
+      console.log(`[Pending Expiry] ${result.expiredCount} pending bookings expired`);
+      if (result.errors && result.errors.length > 0) {
+        console.error(`[Pending Expiry] Errors:`, result.errors);
+      }
+    }
+  } catch (error) {
+    console.error("[Pending Expiry] Error:", error);
+  }
+}, parseInt(process.env.PENDING_EXPIRY_CHECK_INTERVAL_MS || EXPIRY_CHECK_INTERVAL_MS));
+
 // 헬스 체크
 app.get("/", (_req, res) => res.send("Hotel Booking Business API OK"));
 
@@ -63,6 +82,7 @@ app.use("/api/business/bookings", bookingRoutes);
 app.use("/api/business/stats", statsRoutes);
 app.use("/api/business/amenities", amenityRoutes);
 app.use("/api/business/reviews", reviewRoutes);
+app.use("/api/business/availability", availabilityRoutes);
 
 // 404 핸들러
 app.use((req, res, next) => {
