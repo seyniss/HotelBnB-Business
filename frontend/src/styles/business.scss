@@ -330,7 +330,40 @@
     }
 
     .stat-icon {
-      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(127, 216, 190, 0.1);
+      flex-shrink: 0;
+      color: $primary-color;
+      
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+      
+      &.icon-calendar {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      
+      &.icon-money {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      
+      &.icon-hotel {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      
+      &.icon-review {
+        background: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+      }
     }
 
     .stat-label {

@@ -22,6 +22,7 @@ const BusinessLoginPage = () => {
     }
   }, []);
 
+
   const handleKakaoLogin = async () => {
     if (!window.Kakao) {
       setError("카카오 SDK를 불러올 수 없습니다.");
@@ -88,9 +89,10 @@ const BusinessLoginPage = () => {
         err.response?.data?.error || 
         err.message || 
         "로그인에 실패했습니다.";
-      setError(errorMessage);
-    } finally {
+      
+      // 에러를 명시적으로 설정하고, 로딩 상태를 먼저 해제
       setLoading(false);
+      setError(errorMessage);
     }
   };
 
@@ -118,7 +120,20 @@ const BusinessLoginPage = () => {
             </div>
           </div>
 
-          {error && <div className="auth-error">{error}</div>}
+          {error && error.trim() !== "" && (
+            <div 
+              className="auth-error" 
+              style={{ 
+                display: 'block', 
+                visibility: 'visible',
+                opacity: 1,
+                minHeight: '40px'
+              }}
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

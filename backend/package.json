@@ -10,7 +10,11 @@
     "seed": "node scripts/seed.js",
     "seed:bookings": "node scripts/seedBookings.js",
     "seed:dashboard": "node scripts/seed-dashboard-data.js",
-    "seed:reviews": "node scripts/seed-reviews.js"
+    "seed:reviews": "node scripts/seed-reviews.js",
+    "list:business-users": "node scripts/list-business-users.js",
+    "check:signup-collection": "node scripts/check-signup-collection.js",
+    "delete:business-users-from-users": "node scripts/delete-business-users-from-users.js",
+    "seed:test-hotel": "node scripts/seed-test-hotel-data.js"
   },
   "keywords": [],
   "author": "",
