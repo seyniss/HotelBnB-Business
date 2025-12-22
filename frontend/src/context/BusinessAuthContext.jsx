@@ -101,34 +101,9 @@ export const BusinessAuthProvider = ({ children }) => {
     return { hasHotel: false };
   };
 
-  const kakaoLogin = async (kakaoToken) => {
-    const response = await businessAuthApi.kakaoLogin(kakaoToken);
-    const data = extractApiData(response);
-    
-    // 추가 정보가 필요한 경우
-    if (data.needsAdditionalInfo) {
-      return {
-        needsAdditionalInfo: true,
-        tempUserId: data.tempUserId,
-      };
-    }
-    
-    // 바로 로그인 가능한 경우
-    const token = data.token;
-    if (token) {
-      localStorage.setItem("businessToken", token);
-    }
-    if (data.business) {
-      setBusinessInfo(data.business);
-    }
-    return {
-      needsAdditionalInfo: false,
-    };
-  };
-
   return (
     <BusinessAuthContext.Provider
-      value={{ businessInfo, loading, login, logout, signup, checkAuth, kakaoLogin }}
+      value={{ businessInfo, loading, login, logout, signup, checkAuth }}
     >
       {children}
     </BusinessAuthContext.Provider>

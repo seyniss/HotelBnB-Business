@@ -3,7 +3,6 @@ import BusinessLayout from "../components/layout/BusinessLayout";
 import BusinessLoginPage from "../pages/auth/BusinessLoginPage";
 import BusinessSignupPage from "../pages/auth/BusinessSignupPage";
 import BusinessForgotPasswordPage from "../pages/auth/BusinessForgotPasswordPage";
-import BusinessKakaoCompletePage from "../pages/auth/BusinessKakaoCompletePage";
 import BusinessDashboardPage from "../pages/business/BusinessDashboardPage";
 import BusinessBookingListPage from "../pages/business/BusinessBookingListPage";
 import BusinessBookingDetailPage from "../pages/business/BusinessBookingDetailPage";
@@ -28,10 +27,6 @@ const businessRoutes = [
   {
     path: "/business/forgot-password",
     element: <BusinessForgotPasswordPage />,
-  },
-  {
-    path: "/business/kakao/complete",
-    element: <BusinessKakaoCompletePage />,
   },
   {
     path: "/business",

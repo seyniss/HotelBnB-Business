@@ -49,7 +49,6 @@ axiosClient.interceptors.response.use(
       const requestUrl = error.config?.url || '';
       const isAuthEndpoint = requestUrl.includes('/auth/login') || 
                             requestUrl.includes('/auth/signup') || 
-                            requestUrl.includes('/auth/kakao') ||
                             requestUrl.includes('/auth/forgot-password');
       
       // 로그인/회원가입 관련 엔드포인트가 아니고, 현재 경로가 로그인 페이지가 아닐 때만 리다이렉트

@@ -184,52 +184,6 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// 카카오 로그인
-const kakaoLogin = async (req, res) => {
-  try {
-    // 프론트엔드는 access_token을 보내지만, 서비스는 accessToken을 기대
-    const accessToken = req.body.access_token || req.body.accessToken;
-
-    if (!accessToken) {
-      return res.status(400).json(errorResponse("카카오 액세스 토큰이 필요합니다.", 400));
-    }
-
-    const result = await authService.kakaoLogin(accessToken);
-
-    // 로그인 성공 시 쿠키 설정
-    if (result.token) {
-      res.cookie('token', result.token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
-    }
-
-    return res.status(200).json(successResponse(result, "카카오 로그인 성공", 200));
-  } catch (error) {
-    if (error.message === "KAKAO_LOGIN_NOT_IMPLEMENTED") {
-      return res.status(501).json(errorResponse("카카오 로그인 기능이 아직 구현되지 않았습니다.", 501));
-    }
-    return res.status(500).json(errorResponse("카카오 로그인 실패", 500, error.message));
-  }
-};
-
-// 카카오 회원가입 완료
-const completeKakaoSignup = async (req, res) => {
-  try {
-    const result = await authService.completeKakaoSignup(req.body);
-
-    return res.status(200).json(successResponse(result, "카카오 회원가입이 완료되었습니다.", 200));
-  } catch (error) {
-    if (error.message === "KAKAO_SIGNUP_NOT_IMPLEMENTED") {
-      return res.status(501).json(errorResponse("카카오 회원가입 기능이 아직 구현되지 않았습니다.", 501));
-    }
-    return res.status(500).json(errorResponse("카카오 회원가입 실패", 500, error.message));
-  }
-};
-
 module.exports = {
   register,
   login,
@@ -238,7 +192,5 @@ module.exports = {
   changePassword,
   forgotPassword,
   updateProfile,
-  kakaoLogin,
-  completeKakaoSignup
 };
 

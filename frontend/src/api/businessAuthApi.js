@@ -28,14 +28,6 @@ const businessAuthApi = {
   updateProfile: async (data) => {
     return axiosClient.put("/business/auth/profile", data);
   },
-
-  kakaoLogin: async (kakaoToken) => {
-    return axiosClient.post("/business/auth/kakao", { access_token: kakaoToken });
-  },
-
-  completeKakaoSignup: async (data) => {
-    return axiosClient.post("/business/auth/kakao/complete", data);
-  },
 };
 
 export { businessAuthApi };
