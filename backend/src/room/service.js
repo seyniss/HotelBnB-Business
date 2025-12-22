@@ -171,6 +171,7 @@ const getRoomById = async (roomId, userId) => {
     checkInTime: room.checkInTime,
     checkOutTime: room.checkOutTime,
     capacityMin: room.capacityMin,
+    minGuests: room.capacityMin || room.minGuests,
     ownerDiscount: room.ownerDiscount,
     platformDiscount: room.platformDiscount
   };
@@ -192,6 +193,7 @@ const createRoom = async (roomData, userId) => {
     maxGuests,
     capacityMax,
     capacityMin,
+    minGuests,
     ownerDiscount,
     platformDiscount,
     images,
@@ -253,7 +255,8 @@ const createRoom = async (roomData, userId) => {
     roomSize: roomSize || "",
     capacityMax: capacityMax || maxGuests,
     maxGuests: capacityMax || maxGuests,
-    capacityMin: capacityMin || 1,
+    capacityMin: capacityMin || minGuests || 1,
+    minGuests: capacityMin || minGuests || 1,
     ownerDiscount: ownerDiscount || 0,
     platformDiscount: platformDiscount || 0,
     roomImage: finalRoomImage,
@@ -296,6 +299,7 @@ const updateRoom = async (roomId, roomData, userId) => {
     maxGuests,
     capacityMax,
     capacityMin,
+    minGuests,
     ownerDiscount,
     platformDiscount,
     images,
@@ -332,7 +336,13 @@ const updateRoom = async (roomId, roomData, userId) => {
     updates.capacityMax = maxGuests;
     updates.maxGuests = maxGuests;
   }
-  if (capacityMin !== undefined) updates.capacityMin = capacityMin;
+  if (capacityMin !== undefined) {
+    updates.capacityMin = capacityMin;
+    updates.minGuests = capacityMin;
+  } else if (minGuests !== undefined) {
+    updates.capacityMin = minGuests;
+    updates.minGuests = minGuests;
+  }
   if (ownerDiscount !== undefined) updates.ownerDiscount = ownerDiscount;
   if (platformDiscount !== undefined) updates.platformDiscount = platformDiscount;
   if (roomImage !== undefined) {

@@ -80,6 +80,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
     type: "standard",
     price: "",
     maxGuests: "",
+    minGuests: "",
     quantity: "",
     description: "",
     amenities: [],
@@ -93,6 +94,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
         type: room.type || "standard",
         price: room.price || "",
         maxGuests: room.maxGuests || "",
+        minGuests: room.capacityMin || room.minGuests || "",
         quantity: room.quantity || "",
         description: room.description || "",
         amenities: room.amenities || [],
@@ -163,6 +165,16 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           type="number"
           name="maxGuests"
           value={formData.maxGuests}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label>최소 인원</label>
+        <input
+          type="number"
+          name="minGuests"
+          value={formData.minGuests}
           onChange={handleChange}
           required
         />

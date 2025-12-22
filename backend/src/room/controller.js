@@ -65,6 +65,7 @@ const createRoom = async (req, res) => {
       maxGuests,
       capacityMax,
       capacityMin,
+      minGuests,
       ownerDiscount,
       platformDiscount,
       images,
@@ -74,7 +75,7 @@ const createRoom = async (req, res) => {
       status
     } = req.body;
 
-    if (!lodgingId || !price || (!name && !roomName) || (!maxGuests && !capacityMax) || !capacityMin) {
+    if (!lodgingId || !price || (!name && !roomName) || (!maxGuests && !capacityMax) || (!capacityMin && !minGuests)) {
       return res.status(400).json(errorResponse("필수 필드가 누락되었습니다.", 400));
     }
 
@@ -92,6 +93,7 @@ const createRoom = async (req, res) => {
       maxGuests,
       capacityMax,
       capacityMin,
+      minGuests,
       ownerDiscount,
       platformDiscount,
       images,
@@ -133,6 +135,7 @@ const updateRoom = async (req, res) => {
       maxGuests,
       capacityMax,
       capacityMin,
+      minGuests,
       ownerDiscount,
       platformDiscount,
       images,
@@ -155,6 +158,7 @@ const updateRoom = async (req, res) => {
       maxGuests,
       capacityMax,
       capacityMin,
+      minGuests,
       ownerDiscount,
       platformDiscount,
       images,

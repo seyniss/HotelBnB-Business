@@ -38,9 +38,16 @@ const roomSchema = new mongoose.Schema(
       maxlength: 50
     },
     
+    // 실제 데이터 필드명
     capacityMin: {
       type: Number,
       required: true,
+      min: 1
+    },
+    
+    // 호환성을 위한 필드 (capacityMin의 별칭)
+    minGuests: {
+      type: Number,
       min: 1
     },
     
@@ -145,7 +152,7 @@ const roomSchema = new mongoose.Schema(
 
 roomSchema.index({ lodgingId: 1, createdAt: -1 });
 
-// 호환성을 위한 pre-save 훅: name, maxGuests, quantity, images 자동 설정
+// 호환성을 위한 pre-save 훅: name, minGuests, maxGuests, quantity, images 자동 설정
 roomSchema.pre('save', function(next) {
   // roomName이 있으면 name에도 설정
   if (this.roomName && !this.name) {
@@ -154,6 +161,15 @@ roomSchema.pre('save', function(next) {
   // name이 있으면 roomName에도 설정
   if (this.name && !this.roomName) {
     this.roomName = this.name;
+  }
+  
+  // capacityMin이 있으면 minGuests에도 설정
+  if (this.capacityMin && !this.minGuests) {
+    this.minGuests = this.capacityMin;
+  }
+  // minGuests가 있으면 capacityMin에도 설정
+  if (this.minGuests && !this.capacityMin) {
+    this.capacityMin = this.minGuests;
   }
   
   // capacityMax가 있으면 maxGuests에도 설정
