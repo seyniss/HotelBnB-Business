@@ -27,7 +27,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // 3️⃣ DB에서 사업자 조회
-    const user = await BusinessUser.findById(decoded.id).select('isActive role');
+    const user = await BusinessUser.findById(decoded.id).select('isActive role tokenVersion');
     
     if (!user) {
       return res.status(401).json(errorResponse("BUSINESS_USER_NOT_FOUND", 401));
@@ -36,6 +36,13 @@ const authenticateToken = async (req, res, next) => {
     // 계정 활성 상태 확인
     if (!user.isActive) {
       return res.status(403).json(errorResponse("ACCOUNT_INACTIVE", 403));
+    }
+    
+    // 4️⃣ 토큰 버전 검증 (토큰 재사용 방지)
+    const tokenVersion = decoded.tokenVersion !== undefined ? decoded.tokenVersion : 0;
+    const userTokenVersion = user.tokenVersion !== undefined ? user.tokenVersion : 0;
+    if (tokenVersion !== userTokenVersion) {
+      return res.status(401).json(errorResponse("이 토큰은 이미 로그아웃되었습니다.", 401));
     }
     
     // DB에서 조회한 사용자 정보를 req.user에 추가

@@ -14,6 +14,7 @@ const reviewRoutes = require("./src/review/route");
 const amenityRoutes = require("./src/amenity/route");
 const statsRoutes = require("./src/stats/route");
 const availabilityRoutes = require("./src/availability/route");
+const uploadRoutes = require("./src/upload/route");
 
 const app = express();
 const PORT = process.env.PORT;
@@ -89,6 +90,7 @@ app.use("/api/business/stats", statsRoutes);
 app.use("/api/business/amenities", amenityRoutes);
 app.use("/api/business/reviews", reviewRoutes);
 app.use("/api/business/availability", availabilityRoutes);
+app.use("/api/business/upload", uploadRoutes);
 
 // 404 핸들러
 app.use((req, res, next) => {

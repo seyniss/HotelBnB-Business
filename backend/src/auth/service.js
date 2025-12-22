@@ -10,7 +10,8 @@ const makeToken = (user) => {
     {
       id: user._id.toString(),
       role: user.role,
-      email: user.email
+      email: user.email,
+      tokenVersion: user.tokenVersion || 0
     },
     process.env.JWT_SECRET,
     {
@@ -202,6 +203,12 @@ const getMe = async (userId) => {
 
 // 로그아웃
 const logout = async (userId) => {
+  // 토큰 버전 증가 (모든 기존 토큰 무효화)
+  const user = await BusinessUser.findById(userId);
+  if (user) {
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+  }
   // 쿠키/헤더 제거는 controller에서 처리
   return { message: '로그아웃 성공' };
 };

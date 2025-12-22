@@ -66,6 +66,11 @@ const businessUserSchema = new mongoose.Schema(
     },
     lastLoginAttempt: {
       type: Date
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      index: true
     }
   },
   {

@@ -767,3 +767,248 @@
     }
   }
 }
+
+// 이미지 업로더
+.image-uploader {
+  .image-uploader-controls {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+  }
+
+  .image-count {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+  }
+
+  .image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: $spacing-md;
+    margin-top: $spacing-md;
+  }
+
+  .image-preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: $border-radius;
+    overflow: hidden;
+    border: 1px solid $border-color;
+    background: $bg-secondary;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      transition: $transition-base;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.8);
+      }
+    }
+  }
+}
+
+// 객실 이미지 갤러리
+.room-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+
+  .room-image-thumbnail {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: $border-radius;
+    overflow: hidden;
+    border: 1px solid $border-color;
+    background: $bg-secondary;
+    cursor: pointer;
+    transition: $transition-base;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+      border-color: $primary-color;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+}
+
+// 이미지 뷰어
+.image-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+}
+
+.image-viewer-container {
+  position: relative;
+  width: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+  transition: $transition-base;
+  z-index: 10000;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.image-viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  line-height: 1;
+  transition: $transition-base;
+  z-index: 10000;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &.image-viewer-prev {
+    left: 20px;
+  }
+
+  &.image-viewer-next {
+    right: 20px;
+  }
+}
+
+.image-viewer-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+.image-viewer-controls {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  z-index: 10000;
+}
+
+.image-viewer-info {
+  color: white;
+  font-size: $font-size-sm;
+  font-weight: 500;
+}
+
+.image-viewer-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: rgba(255, 255, 255, 0.2);
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius;
+
+  button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    transition: $transition-base;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  span {
+    color: white;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    min-width: 50px;
+    text-align: center;
+  }
+}

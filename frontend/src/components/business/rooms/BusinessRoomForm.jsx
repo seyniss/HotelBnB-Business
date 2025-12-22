@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import ImageUploader from "./ImageUploader";
 
 const TYPE_OPTIONS = [
   { value: "standard", label: "스탠다드" },
@@ -86,10 +87,19 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel, readOnly = false }) => {
     description: "",
     amenities: [],
     status: "available",
+    images: [],
   });
 
   useEffect(() => {
     if (room) {
+      // images 배열 처리: room.images가 있으면 사용, 없으면 room.roomImage를 배열로 변환
+      let imagesArray = [];
+      if (room.images && Array.isArray(room.images) && room.images.length > 0) {
+        imagesArray = room.images;
+      } else if (room.roomImage) {
+        imagesArray = [room.roomImage];
+      }
+
       setFormData({
         name: room.name || "",
         type: room.type || "standard",
@@ -101,6 +111,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel, readOnly = false }) => {
         description: room.description || "",
         amenities: room.amenities || [],
         status: room.status || "available",
+        images: imagesArray,
       });
     }
   }, [room]);
@@ -224,6 +235,12 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel, readOnly = false }) => {
           disabled={readOnly}
         />
       </div>
+
+      <ImageUploader
+        images={formData.images}
+        onChange={(newImages) => setFormData((prev) => ({ ...prev, images: newImages }))}
+        disabled={readOnly}
+      />
 
       <div className="form-group">
         <label>상태</label>

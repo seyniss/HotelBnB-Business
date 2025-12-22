@@ -16,10 +16,10 @@ const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
  * S3에 파일 업로드를 위한 presigned URL 생성
  * @param {string} key - S3 객체 키 (파일 경로)
  * @param {string} contentType - 파일의 MIME 타입
- * @param {number} expiresIn - URL 만료 시간 (초 단위, 기본값: 3600초 = 1시간)
+ * @param {number} expiresIn - URL 만료 시간 (초 단위, 기본값: 900초 = 15분)
  * @returns {Promise<string>} presigned URL
  */
-async function presignPut(key, contentType, expiresIn = 3600) {
+async function presignPut(key, contentType, expiresIn = 900) {
   if (!BUCKET_NAME) {
     throw new Error('AWS_S3_BUCKET_NAME 환경 변수가 설정되지 않았습니다.');
   }

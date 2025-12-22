@@ -105,6 +105,7 @@ const getMe = async (req, res) => {
 // 로그아웃
 const logout = async (req, res) => {
   try {
+    // tokenVersion 증가로 모든 기존 토큰 무효화
     const result = await authService.logout(req.user.id);
 
     res.clearCookie('token', {
