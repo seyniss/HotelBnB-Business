@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { businessRoomApi } from "../../api/businessRoomApi";
 import { extractApiArray, extractErrorMessage } from "../../utils/apiUtils";
 import { logger } from "../../utils/logger";
+import StatusBadge from "../../components/common/StatusBadge";
 
 const BusinessRoomListPage = () => {
   const navigate = useNavigate();
@@ -82,13 +83,10 @@ const BusinessRoomListPage = () => {
                   <td>{room.maxGuests}명</td>
                   <td>{room.quantity}개</td>
                   <td>
-                    <span
-                      className={`status-badge ${
-                        room.available ? "confirmed" : "cancelled"
-                      }`}
-                    >
-                      {room.available ? "판매중" : "판매중지"}
-                    </span>
+                    <StatusBadge 
+                      status={room.status || (room.available ? "available" : "unavailable")} 
+                      type="room" 
+                    />
                   </td>
                   <td>
                     <Link 
