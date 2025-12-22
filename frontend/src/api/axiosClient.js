@@ -2,12 +2,13 @@ import axios from "axios";
 import { logger } from "../utils/logger";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || 
+           (import.meta.env.PROD ? "/api" : "http://localhost:3000/api"),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // 쿠키를 포함하여 요청 전송
+  withCredentials: true,
 });
 
 // 요청 인터셉터
