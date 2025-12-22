@@ -8,7 +8,7 @@ import AlertModal from "../../components/common/AlertModal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { extractApiData, extractErrorMessage } from "../../utils/apiUtils";
 
-const BusinessRoomEditPage = () => {
+const BusinessRoomDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [room, setRoom] = useState(null);
@@ -35,21 +35,12 @@ const BusinessRoomEditPage = () => {
     }
   };
 
-  const handleSubmit = async (data) => {
-    try {
-      await businessRoomApi.updateRoom(id, data);
-      setAlertModal({ isOpen: true, message: "객실이 수정되었습니다.", type: "success" });
-      setTimeout(() => {
-        navigate("/business/rooms");
-      }, 1000);
-    } catch (err) {
-      const errorMessage = extractErrorMessage(err, "객실 수정에 실패했습니다.");
-      setAlertModal({ isOpen: true, message: errorMessage, type: "error" });
-    }
-  };
-
   const handleCancel = () => {
     navigate("/business/rooms");
+  };
+
+  const handleEdit = () => {
+    navigate(`/business/rooms/${id}/edit`);
   };
 
   const handleDeleteRoom = async () => {
@@ -78,21 +69,29 @@ const BusinessRoomEditPage = () => {
   if (error) return <ErrorMessage message={error} onRetry={fetchRoom} />;
 
   return (
-    <div className="business-room-edit-page">
+    <div className="business-room-detail-page">
       <div className="page-header">
-        <h1>객실 수정</h1>
+        <h1>객실 상세</h1>
         {room && room.id && (
-          <button 
-            className="btn btn-danger" 
-            onClick={() => setDeleteConfirm({ isOpen: true })}
-          >
-            객실 삭제
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleEdit}
+            >
+              수정
+            </button>
+            <button 
+              className="btn btn-danger" 
+              onClick={() => setDeleteConfirm({ isOpen: true })}
+            >
+              객실 삭제
+            </button>
+          </div>
         )}
       </div>
 
       <div className="card">
-        <BusinessRoomForm room={room} onSubmit={handleSubmit} onCancel={handleCancel} />
+        <BusinessRoomForm room={room} onCancel={handleCancel} readOnly={true} />
       </div>
 
       <AlertModal
@@ -113,4 +112,5 @@ const BusinessRoomEditPage = () => {
   );
 };
 
-export default BusinessRoomEditPage;
+export default BusinessRoomDetailPage;
+

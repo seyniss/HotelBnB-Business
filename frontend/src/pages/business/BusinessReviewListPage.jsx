@@ -8,7 +8,7 @@ import Loader from "../../components/common/Loader";
 const BusinessReviewListPage = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [replyModal, setReplyModal] = useState({ open: false, reviewId: null, replyText: "" });
+  const [replyModal, setReplyModal] = useState({ open: false, reviewId: null, replyText: "", isEdit: false });
   const [reportModal, setReportModal] = useState({ open: false, reviewId: null, reason: "" });
   const [alertModal, setAlertModal] = useState({ isOpen: false, message: "", type: "info" });
 
@@ -32,13 +32,22 @@ const BusinessReviewListPage = () => {
   const handleReplySubmit = async (reviewId, replyText) => {
     try {
       await businessReviewApi.replyToReview(reviewId, replyText);
-      setAlertModal({ isOpen: true, message: "답변이 등록되었습니다.", type: "success" });
-      setReplyModal({ open: false, reviewId: null, replyText: "" });
+      const isEdit = replyModal.isEdit;
+      setAlertModal({ 
+        isOpen: true, 
+        message: isEdit ? "답변이 수정되었습니다." : "답변이 등록되었습니다.", 
+        type: "success" 
+      });
+      setReplyModal({ open: false, reviewId: null, replyText: "", isEdit: false });
       fetchReviews();
     } catch (error) {
-      const errorMessage = extractErrorMessage(error, "답변 등록에 실패했습니다.");
+      const errorMessage = extractErrorMessage(error, replyModal.isEdit ? "답변 수정에 실패했습니다." : "답변 등록에 실패했습니다.");
       setAlertModal({ isOpen: true, message: errorMessage, type: "error" });
     }
+  };
+
+  const handleEditReply = (reviewId, existingReply) => {
+    setReplyModal({ open: true, reviewId: reviewId, replyText: existingReply || "", isEdit: true });
   };
 
   const handleReportSubmit = async (reviewId, reason) => {
@@ -147,12 +156,19 @@ const BusinessReviewListPage = () => {
               )}
 
               <div style={{ display: "flex", gap: "0.5rem" }}>
-                {!review.reply && (
+                {!review.reply ? (
                   <button
                     className="btn btn-outline"
-                    onClick={() => setReplyModal({ open: true, reviewId: review.id || review._id, replyText: "" })}
+                    onClick={() => setReplyModal({ open: true, reviewId: review.id || review._id, replyText: "", isEdit: false })}
                   >
                     답글 작성
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => handleEditReply(review.id || review._id, review.reply)}
+                  >
+                    답글 수정
                   </button>
                 )}
                 {/* 백엔드 상태: blocked, 프론트엔드 상태: reported */}
@@ -170,11 +186,11 @@ const BusinessReviewListPage = () => {
         </div>
       </div>
 
-      {/* 답글 작성 모달 */}
+      {/* 답글 작성/수정 모달 */}
       {replyModal.open && (
-        <div className="modal-overlay" onClick={() => setReplyModal({ open: false, reviewId: null, replyText: "" })}>
+        <div className="modal-overlay" onClick={() => setReplyModal({ open: false, reviewId: null, replyText: "", isEdit: false })}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>답글 작성</h3>
+            <h3>{replyModal.isEdit ? "답글 수정" : "답글 작성"}</h3>
             <textarea
               value={replyModal.replyText}
               onChange={(e) => setReplyModal({ ...replyModal, replyText: e.target.value })}
@@ -195,7 +211,7 @@ const BusinessReviewListPage = () => {
               <button
                 type="button"
                 className="btn btn-outline"
-                onClick={() => setReplyModal({ open: false, reviewId: null, replyText: "" })}
+                onClick={() => setReplyModal({ open: false, reviewId: null, replyText: "", isEdit: false })}
               >
                 취소
               </button>
@@ -204,7 +220,7 @@ const BusinessReviewListPage = () => {
                 className="btn btn-primary"
                 onClick={() => handleReplySubmit(replyModal.reviewId, replyModal.replyText)}
               >
-                등록
+                {replyModal.isEdit ? "수정 완료" : "등록"}
               </button>
             </div>
           </div>

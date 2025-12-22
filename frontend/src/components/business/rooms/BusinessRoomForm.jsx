@@ -74,10 +74,11 @@ const selectStyles = {
   }),
 };
 
-const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
+const BusinessRoomForm = ({ room, onSubmit, onCancel, readOnly = false }) => {
   const [formData, setFormData] = useState({
     name: "",
     type: "standard",
+    roomSize: "",
     price: "",
     maxGuests: "",
     minGuests: "",
@@ -92,6 +93,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
       setFormData({
         name: room.name || "",
         type: room.type || "standard",
+        roomSize: room.roomSize || "",
         price: room.price || "",
         maxGuests: room.maxGuests || "",
         minGuests: room.capacityMin || room.minGuests || "",
@@ -118,11 +120,13 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!readOnly && onSubmit) {
+      onSubmit(formData);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit} className="form">
       <div className="form-group">
         <label>객실명</label>
         <input
@@ -130,7 +134,8 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           name="name"
           value={formData.name}
           onChange={handleChange}
-          required
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
 
@@ -143,8 +148,22 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           options={TYPE_OPTIONS}
           styles={selectStyles}
           isSearchable={false}
+          isDisabled={readOnly}
           className="room-type-select"
           classNamePrefix="room-type-select"
+        />
+      </div>
+
+      <div className="form-group">
+        <label>객실 크기</label>
+        <input
+          type="text"
+          name="roomSize"
+          value={formData.roomSize}
+          onChange={handleChange}
+          placeholder="예: 25평"
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
 
@@ -155,7 +174,8 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           name="price"
           value={formData.price}
           onChange={handleChange}
-          required
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
 
@@ -166,7 +186,8 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           name="maxGuests"
           value={formData.maxGuests}
           onChange={handleChange}
-          required
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
       <div className="form-group">
@@ -176,7 +197,8 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           name="minGuests"
           value={formData.minGuests}
           onChange={handleChange}
-          required
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
 
@@ -187,7 +209,8 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           name="quantity"
           value={formData.quantity}
           onChange={handleChange}
-          required
+          disabled={readOnly}
+          required={!readOnly}
         />
       </div>
 
@@ -198,6 +221,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           value={formData.description}
           onChange={handleChange}
           rows={4}
+          disabled={readOnly}
         />
       </div>
 
@@ -210,6 +234,7 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
           options={STATUS_OPTIONS}
           styles={selectStyles}
           isSearchable={false}
+          isDisabled={readOnly}
           className="room-status-select"
           classNamePrefix="room-status-select"
         />
@@ -217,11 +242,13 @@ const BusinessRoomForm = ({ room, onSubmit, onCancel }) => {
 
       <div className="form-actions">
         <button type="button" className="btn btn-outline" onClick={onCancel}>
-          취소
+          {readOnly ? "목록으로" : "취소"}
         </button>
-        <button type="submit" className="btn btn-primary">
-          {room ? "수정" : "등록"}
-        </button>
+        {!readOnly && (
+          <button type="submit" className="btn btn-primary">
+            {room ? "수정" : "등록"}
+          </button>
+        )}
       </div>
     </form>
   );

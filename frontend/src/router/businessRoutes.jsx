@@ -9,6 +9,7 @@ import BusinessBookingListPage from "../pages/business/BusinessBookingListPage";
 import BusinessBookingDetailPage from "../pages/business/BusinessBookingDetailPage";
 import BusinessRoomListPage from "../pages/business/BusinessRoomListPage";
 import BusinessRoomCreatePage from "../pages/business/BusinessRoomCreatePage";
+import BusinessRoomDetailPage from "../pages/business/BusinessRoomDetailPage";
 import BusinessRoomEditPage from "../pages/business/BusinessRoomEditPage";
 import BusinessStatisticsPage from "../pages/business/BusinessStatisticsPage";
 import BusinessReviewListPage from "../pages/business/BusinessReviewListPage";
@@ -64,6 +65,10 @@ const businessRoutes = [
       {
         path: "rooms/:id/edit",
         element: <BusinessRoomEditPage />,
+      },
+      {
+        path: "rooms/:id",
+        element: <BusinessRoomDetailPage />,
       },
       {
         path: "statistics",

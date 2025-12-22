@@ -69,7 +69,14 @@ const BusinessRoomListPage = () => {
             <tbody>
               {rooms.map((room) => (
                 <tr key={room.id}>
-                  <td>{room.name}</td>
+                  <td>
+                    <Link 
+                      to={`/business/rooms/${room.id}`}
+                      style={{ color: "#7FD8BE", textDecoration: "none", fontWeight: 500 }}
+                    >
+                      {room.name}
+                    </Link>
+                  </td>
                   <td>{room.type}</td>
                   <td>{formatCurrency(room.price)}</td>
                   <td>{room.maxGuests}명</td>

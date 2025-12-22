@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StatusBadge from "../../common/StatusBadge";
 
 const BusinessReviewDetail = ({ review, onReply, onReport }) => {
   const [replyText, setReplyText] = useState("");
+  const [isEditingReply, setIsEditingReply] = useState(false);
+
+  useEffect(() => {
+    // review.reply가 변경되면 수정 모드 해제 및 replyText 초기화
+    if (review && review.reply && !isEditingReply) {
+      setReplyText("");
+      setIsEditingReply(false);
+    }
+  }, [review?.reply, isEditingReply]);
 
   const renderStars = (rating) => {
     return "★".repeat(rating) + "☆".repeat(5 - rating);
@@ -13,7 +22,18 @@ const BusinessReviewDetail = ({ review, onReply, onReport }) => {
     if (replyText.trim()) {
       onReply(review.id, replyText);
       setReplyText("");
+      setIsEditingReply(false);
     }
+  };
+
+  const handleEditReply = () => {
+    setIsEditingReply(true);
+    setReplyText(review.reply || "");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingReply(false);
+    setReplyText("");
   };
 
   if (!review) return null;
@@ -48,7 +68,7 @@ const BusinessReviewDetail = ({ review, onReply, onReport }) => {
           <span className="value">{review.content}</span>
         </div>
 
-        {review.reply && (
+        {review.reply && !isEditingReply && (
           <div className="detail-row">
             <span className="label">답변</span>
             <span className="value">{review.reply}</span>
@@ -56,9 +76,9 @@ const BusinessReviewDetail = ({ review, onReply, onReport }) => {
         )}
       </div>
 
-      {!review.reply && (
+      {(!review.reply || isEditingReply) && (
         <form onSubmit={handleReplySubmit} className="reply-form">
-          <h4>답변 작성</h4>
+          <h4>{isEditingReply ? "답변 수정" : "답변 작성"}</h4>
           <textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
@@ -66,11 +86,31 @@ const BusinessReviewDetail = ({ review, onReply, onReport }) => {
             rows={4}
           />
           <div className="form-actions">
+            {isEditingReply && (
+              <button 
+                type="button" 
+                className="btn btn-outline" 
+                onClick={handleCancelEdit}
+              >
+                취소
+              </button>
+            )}
             <button type="submit" className="btn btn-primary">
-              답변 등록
+              {isEditingReply ? "수정 완료" : "답변 등록"}
             </button>
           </div>
         </form>
+      )}
+
+      {review.reply && !isEditingReply && (
+        <div className="detail-actions" style={{ marginTop: "1rem" }}>
+          <button
+            className="btn btn-outline"
+            onClick={handleEditReply}
+          >
+            답글 수정
+          </button>
+        </div>
       )}
 
       {review.status !== "reported" && (

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { businessRoomApi } from "../../api/businessRoomApi";
+import { businessHotelApi } from "../../api/businessHotelApi";
 import BusinessRoomForm from "../../components/business/rooms/BusinessRoomForm";
 import AlertModal from "../../components/common/AlertModal";
-import { extractErrorMessage } from "../../utils/apiUtils";
+import { extractApiData, extractErrorMessage } from "../../utils/apiUtils";
 
 const BusinessRoomCreatePage = () => {
   const navigate = useNavigate();
@@ -11,7 +12,29 @@ const BusinessRoomCreatePage = () => {
 
   const handleSubmit = async (data) => {
     try {
-      await businessRoomApi.createRoom(data);
+      // 숙소 정보 조회하여 lodgingId 가져오기
+      const hotelResponse = await businessHotelApi.getMyHotel();
+      const hotelData = extractApiData(hotelResponse);
+      // 배열인 경우 첫 번째 호텔 사용 (백엔드가 배열로 반환할 수 있음)
+      const hotel = Array.isArray(hotelData) ? hotelData[0] : hotelData;
+      
+      if (!hotel || (!hotel._id && !hotel.id)) {
+        setAlertModal({ 
+          isOpen: true, 
+          message: "숙소 정보를 찾을 수 없습니다. 먼저 숙소를 등록해주세요.", 
+          type: "error" 
+        });
+        return;
+      }
+
+      // lodgingId 추가
+      const lodgingId = hotel._id || hotel.id;
+      const roomData = {
+        ...data,
+        lodgingId: lodgingId
+      };
+
+      await businessRoomApi.createRoom(roomData);
       setAlertModal({ isOpen: true, message: "객실이 등록되었습니다.", type: "success" });
       setTimeout(() => {
         navigate("/business/rooms");
