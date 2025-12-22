@@ -74,6 +74,12 @@ setInterval(async () => {
 // 헬스 체크
 app.get("/", (_req, res) => res.send("Hotel Booking Business API OK"));
 
+// 요청 로깅 미들웨어 (디버깅용)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // API 라우트
 app.use("/api/business/auth", authRoutes);
 app.use("/api/business/hotel", lodgingRoutes);

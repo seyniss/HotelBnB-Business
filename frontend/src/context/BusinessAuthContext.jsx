@@ -30,23 +30,26 @@ export const BusinessAuthProvider = ({ children }) => {
   };
 
   const login = async (credentials) => {
-    const response = await businessAuthApi.login(credentials);
-    const data = extractApiData(response);
-    const token = data?.token || response?.token;
-    const business = data?.business || response?.business;
-    
-    if (token) {
-      localStorage.setItem("businessToken", token);
+    try {
+      const response = await businessAuthApi.login(credentials);
+      const data = extractApiData(response);
+      const token = data?.token || response?.token;
+      const business = data?.business || response?.business;
+      
+      if (token) {
+        localStorage.setItem("businessToken", token);
+      }
+      if (business) {
+        setBusinessInfo(business);
+      }
+      
+      // 호텔 정보 확인을 위해 반환값에 hasHotel 플래그 추가
+      const hasHotel = await checkHotelExists();
+      return { hasHotel };
+    } catch (error) {
+      // 에러를 그대로 throw하여 BusinessLoginPage에서 처리할 수 있도록 함
+      throw error;
     }
-    if (business) {
-      setBusinessInfo(business);
-    }
-    
-    logger.log("로그인 응답:", response);
-    
-    // 호텔 정보 확인을 위해 반환값에 hasHotel 플래그 추가
-    const hasHotel = await checkHotelExists();
-    return { hasHotel };
   };
   
   const checkHotelExists = async () => {
