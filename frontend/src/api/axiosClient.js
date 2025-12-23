@@ -2,12 +2,13 @@ import axios from "axios";
 import { logger } from "../utils/logger";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || 
+           (import.meta.env.PROD ? "/api" : "http://localhost:3000/api"),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // 쿠키를 포함하여 요청 전송
+  withCredentials: true,
 });
 
 // 요청 인터셉터
@@ -48,7 +49,6 @@ axiosClient.interceptors.response.use(
       const requestUrl = error.config?.url || '';
       const isAuthEndpoint = requestUrl.includes('/auth/login') || 
                             requestUrl.includes('/auth/signup') || 
-                            requestUrl.includes('/auth/kakao') ||
                             requestUrl.includes('/auth/forgot-password');
       
       // 로그인/회원가입 관련 엔드포인트가 아니고, 현재 경로가 로그인 페이지가 아닐 때만 리다이렉트

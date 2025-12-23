@@ -47,7 +47,24 @@ app.use(cors({
   exposedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json({ limit: "10mb" }));
+// JSON 파싱 미들웨어 (에러 처리 포함)
+app.use(express.json({ 
+  limit: "10mb",
+  strict: true
+}));
+
+// JSON 파싱 에러를 먼저 처리
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('JSON 파싱 에러:', err.message);
+    return res.status(400).json({ 
+      message: '잘못된 JSON 형식입니다.', 
+      error: err.message 
+    });
+  }
+  next(err);
+});
+
 app.use(cookieParser());
 
 // MongoDB 연결
@@ -97,19 +114,8 @@ app.use((req, res, next) => {
   res.status(404).json({ message: '요청하신 경로를 찾을 수 없습니다.' });
 });
 
-// JSON 파싱 에러 핸들러
+// 최종 에러 핸들러
 app.use((err, req, res, next) => {
-  // JSON 파싱 에러 처리
-  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    console.error('JSON 파싱 에러:', err.message);
-    return res.status(400).json({ 
-      message: '잘못된 JSON 형식입니다.', 
-      error: 'JSON 형식이 올바르지 않습니다. 제어 문자(줄바꿈, 탭 등)가 포함되어 있는지 확인해주세요.',
-      detail: err.message 
-    });
-  }
-  
-  // 기타 에러 처리
   console.error('Unhandled Error:', err);
   const statusCode = err.statusCode || err.status || 500;
   res.status(statusCode).json({ 
@@ -118,7 +124,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Business Backend Server running: http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Business Backend Server running: http://0.0.0.0:${PORT}`);
 });
 

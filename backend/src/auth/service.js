@@ -280,25 +280,6 @@ const updateProfile = async (userId, profileData) => {
   };
 };
 
-// 카카오 로그인
-const kakaoLogin = async (kakaoToken) => {
-  // 미구현: 카카오 API를 통한 사용자 정보 조회 및 인증
-  // 구현 시 필요 사항:
-  // 1. axios 등을 사용해 카카오 API 호출
-  // 2. 카카오 토큰 검증 (verifyKakaoToken)
-  // 3. 카카오 사용자 정보로 BusinessUser 조회 또는 생성
-  
-  throw new Error("KAKAO_LOGIN_NOT_IMPLEMENTED");
-};
-
-// 카카오 회원가입 완료
-const completeKakaoSignup = async (kakaoData) => {
-  // 미구현: 카카오 회원가입 완료 로직
-  // 카카오로 로그인한 사용자의 추가 정보(사업자 정보 등)를 입력받아 회원가입 완료
-  
-  throw new Error("KAKAO_SIGNUP_NOT_IMPLEMENTED");
-};
-
 module.exports = {
   register,
   login,
@@ -307,8 +288,6 @@ module.exports = {
   changePassword,
   forgotPassword,
   updateProfile,
-  kakaoLogin,
-  completeKakaoSignup,
   LOCK_MAX,
   LOCKOUT_DURATION_MS
 };

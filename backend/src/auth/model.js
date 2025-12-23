@@ -43,7 +43,7 @@ const businessUserSchema = new mongoose.Schema(
     },
     provider: {
       type: String,
-      enum: ['local', 'kakao', 'google'],
+      enum: ['local'],
       default: 'local'
     },
 

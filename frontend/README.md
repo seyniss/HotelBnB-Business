@@ -67,7 +67,6 @@ npm run dev
 ```env
 VITE_API_URL=http://localhost:3000
 VITE_API_BASE_PATH=/business/api
-VITE_KAKAO_APP_KEY=your_kakao_app_key
 VITE_S3_BUCKET_URL=https://your-bucket.s3.amazonaws.com
 ```
 

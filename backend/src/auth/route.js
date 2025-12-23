@@ -12,8 +12,6 @@ const {
   changePassword,
   forgotPassword,
   updateProfile,
-  kakaoLogin,
-  completeKakaoSignup,
 } = require("./controller");
 const { authenticateToken } = require("../common/authMiddleware");
 
@@ -25,12 +23,6 @@ router.post("/login", login);
 
 // POST /api/business/auth/forgot-password → 비밀번호 찾기 (로그인 불필요)
 router.post("/forgot-password", forgotPassword);
-
-// POST /api/business/auth/kakao → 카카오 로그인 (로그인 불필요)
-router.post("/kakao", kakaoLogin);
-
-// POST /api/business/auth/kakao/complete → 카카오 회원가입 완료 (로그인 불필요)
-router.post("/kakao/complete", completeKakaoSignup);
 
 // 인증 필요 라우트
 router.use(authenticateToken);
